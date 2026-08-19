@@ -1,0 +1,1469 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - TU5G Real-time Network Operations Center{% endblock %}
+
+{% block extra_head %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  /* Base Dashboard CSS & Theme Overrides */
+  :root {
+    --holo-cyan: #00f3ff;
+    --holo-pink: #ff007f;
+    --holo-green: #00ff66;
+    --holo-glow-cyan: 0 0 15px rgba(0, 243, 255, 0.4);
+    --holo-glow-pink: 0 0 15px rgba(255, 0, 127, 0.4);
+  }
+
+  /* Theme 3: Ultra Holographic Mode Styles */
+  body.theme-holo {
+    background: radial-gradient(circle at 10% 10%, rgba(0, 243, 255, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 90% 90%, rgba(255, 0, 127, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, #0a0f1d 0%, #030712 100%) !important;
+    background-attachment: fixed !important;
+    color: #e2e8f0 !important;
+  }
+
+  body.theme-holo .card,
+  body.theme-holo .glass-card-holo {
+    background: rgba(13, 22, 45, 0.65) !important;
+    backdrop-filter: blur(16px) saturate(180%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+    border: 1px solid rgba(0, 243, 255, 0.3) !important;
+    box-shadow: 0 8px 32px 0 rgba(0, 243, 255, 0.12), inset 0 0 12px rgba(0, 243, 255, 0.05) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+
+  body.theme-holo .card:hover {
+    border-color: rgba(0, 243, 255, 0.7) !important;
+    box-shadow: 0 10px 35px 0 rgba(0, 243, 255, 0.28), inset 0 0 20px rgba(0, 243, 255, 0.15) !important;
+    transform: translateY(-2px) !important;
+  }
+
+  body.theme-holo .bg-dark-card {
+    background: rgba(13, 22, 45, 0.65) !important;
+  }
+
+  body.theme-holo .bg-dark-input {
+    background: rgba(18, 30, 60, 0.75) !important;
+    border-color: rgba(0, 243, 255, 0.3) !important;
+    color: #ffffff !important;
+  }
+
+  body.theme-holo .holo-glow-text {
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.8), 0 0 20px rgba(0, 243, 255, 0.4);
+  }
+
+  body.theme-holo .badge {
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  /* Activity Log & Cell Grid */
+  .activity-feed-scroll {
+    max-height: 380px;
+    overflow-y: auto;
+  }
+
+  .activity-item {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+  }
+
+  .activity-item:hover {
+    background-color: rgba(255, 255, 255, 0.03) !important;
+  }
+
+  /* Pulse Ring for Online Status */
+  .pulse-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulse-ring-anim 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+  }
+
+  @keyframes pulse-ring-anim {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0.7); }
+    70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(0, 255, 102, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 255, 102, 0); }
+  }
+
+  /* Signal Bars Graphics */
+  .signal-bars {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 18px;
+  }
+  .signal-bar {
+    width: 4px;
+    border-radius: 1px;
+    background-color: var(--color-border);
+    transition: background-color 0.3s ease;
+  }
+  .signal-bar.active-green { background-color: #10b981 !important; }
+  .signal-bar.active-yellow { background-color: #f59e0b !important; }
+  .signal-bar.active-red { background-color: #ef4444 !important; }
+
+  /* Chart Containers */
+  .chart-card-body {
+    position: relative;
+    height: 250px;
+    width: 100%;
+  }
+
+  /* Stat Card Hover */
+  .stat-card {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .stat-card:hover {
+    transform: translateY(-3px);
+  }
+
+  /* Active Theme Button */
+  .btn-theme-select.active {
+    background-color: rgba(255, 255, 255, 0.15) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-2">
+
+  <!-- 1. HEADER BAR -->
+  <div class="card border-0 bg-dark-card shadow-sm mb-4 dashboard-header-card overflow-hidden">
+    <div class="card-body p-3 p-md-4">
+      <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <!-- Logo, Brand & Badge -->
+        <div class="d-flex align-items-center gap-3">
+          <div class="brand-icon-wrapper rounded-3 p-2 text-white d-flex align-items-center justify-content-center shadow" style="width: 48px; height: 48px; background: linear-gradient(135deg, #0d6efd 0%, #00f3ff 100%);">
+            <i class="bi bi-cpu-fill fs-3"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <h2 class="h4 fw-bold mb-0 text-light tracking-wider holo-glow-text">TU5G NETWORK CENTER</h2>
+              <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1 fs-8 rounded-pill d-flex align-items-center gap-1">
+                <span class="pulse-indicator bg-success"></span>
+                TUGS v1.0 ACTIVATED
+              </span>
+            </div>
+            <p class="text-secondary fs-7 mb-0">Real-Time Cellular Telemetry & Infrastructure Operations</p>
+          </div>
+        </div>
+
+        <!-- WS Live Status Badge, Theme Switcher, Notifications & User Avatar -->
+        <div class="d-flex align-items-center gap-2 gap-md-3 flex-wrap">
+          <!-- WS Live Badge -->
+          <div id="wsStatusBadge" class="badge bg-danger-subtle text-danger border border-danger-subtle py-2 px-3 rounded-pill d-flex align-items-center gap-2 fs-7">
+            <span class="spinner-grow spinner-grow-sm" role="status" aria-hidden="true"></span>
+            <span id="wsStatusText">Connecting Stream...</span>
+          </div>
+
+          <!-- Theme Switcher (Light / Dark / Ultra Holographic) -->
+          <div class="btn-group btn-group-sm p-1 bg-dark-input rounded-3 border border-secondary-subtle" role="group" aria-label="Theme Switcher">
+            <button type="button" class="btn btn-sm text-secondary btn-theme-select" id="themeBtnLight" onclick="setDashboardTheme('light')" title="Light Theme">
+              <i class="bi bi-sun-fill me-1"></i> Light
+            </button>
+            <button type="button" class="btn btn-sm text-secondary btn-theme-select active" id="themeBtnDark" onclick="setDashboardTheme('dark')" title="Dark Theme">
+              <i class="bi bi-moon-stars-fill me-1"></i> Dark
+            </button>
+            <button type="button" class="btn btn-sm text-secondary btn-theme-select" id="themeBtnHolo" onclick="setDashboardTheme('holo')" title="Ultra Holographic Mode">
+              <i class="bi bi-vr me-1 text-info"></i> Holographic
+            </button>
+          </div>
+
+          <!-- Notification Bell -->
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm position-relative rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="notifBellBtn">
+              <i class="bi bi-bell-fill fs-6 text-light"></i>
+              <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger fs-9" id="notifBadge">
+                3
+              </span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end shadow-lg border border-secondary-subtle bg-dark-card p-0" style="width: 320px; max-height: 400px; overflow-y: auto;">
+              <div class="p-3 border-bottom border-secondary-subtle d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 text-light fw-bold fs-7"><i class="bi bi-bell me-1 text-info"></i> System Alerts</h6>
+                <span class="badge bg-primary-subtle text-primary fs-9">Real-time</span>
+              </div>
+              <div class="list-group list-group-flush fs-7" id="notificationDropdownList">
+                <div class="list-group-item bg-transparent text-secondary border-bottom border-secondary-subtle p-2 px-3">
+                  <div class="d-flex justify-content-between text-light fw-semibold">
+                    <span><i class="bi bi-broadcast text-success me-1"></i> vCell-01 Synced</span>
+                    <small class="text-secondary fs-9">Just now</small>
+                  </div>
+                  <div class="fs-8 text-secondary">Latency stable at 18ms under 82% load.</div>
+                </div>
+                <div class="list-group-item bg-transparent text-secondary border-bottom border-secondary-subtle p-2 px-3">
+                  <div class="d-flex justify-content-between text-light fw-semibold">
+                    <span><i class="bi bi-person-check text-info me-1"></i> New e-SIM Provisioned</span>
+                    <small class="text-secondary fs-9">2m ago</small>
+                  </div>
+                  <div class="fs-8 text-secondary">e-SIM #ESIM-94821 assigned to vCell-01.</div>
+                </div>
+                <div class="list-group-item bg-transparent text-secondary border-bottom border-secondary-subtle p-2 px-3">
+                  <div class="d-flex justify-content-between text-light fw-semibold">
+                    <span><i class="bi bi-credit-card text-warning me-1"></i> HOPE PAY Transaction</span>
+                    <small class="text-secondary fs-9">5m ago</small>
+                  </div>
+                  <div class="fs-8 text-secondary">Payment of $49.99 received for 5G Unlimited.</div>
+                </div>
+              </div>
+              <div class="p-2 text-center bg-dark-input border-top border-secondary-subtle">
+                <small class="text-secondary cursor-pointer" onclick="clearNotifBadge()">Mark all as read</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- User Avatar -->
+          <div class="d-flex align-items-center gap-2 ps-2 border-start border-secondary-subtle">
+            <div class="avatar-circle text-white fw-bold rounded-circle d-flex align-items-center justify-content-center shadow-sm" style="width: 38px; height: 38px; font-size: 0.9rem; background: linear-gradient(135deg, #0d6efd, #6610f2) !important;">
+              TU
+            </div>
+            <div class="d-none d-xl-block">
+              <div class="fs-7 fw-bold text-light lh-1">Ops Director</div>
+              <small class="text-success fs-9"><i class="bi bi-circle-fill text-success fs-9 me-1"></i>SuperAdmin</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 7. QUICK ACTION BUTTONS BAR -->
+  <div class="d-flex flex-wrap gap-2 mb-4 justify-content-between align-items-center bg-dark-card p-3 rounded-3 border border-secondary-subtle shadow-sm">
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <span class="text-secondary fs-7 fw-semibold text-uppercase tracking-wider me-2 d-none d-sm-inline">
+        <i class="bi bi-lightning-charge-fill text-warning me-1"></i>Quick Actions:
+      </span>
+      <button class="btn btn-primary btn-sm d-flex align-items-center gap-1 shadow-sm" data-bs-toggle="modal" data-bs-target="#provisionEsimModal">
+        <i class="bi bi-plus-circle-fill"></i> Provision E-SIM
+      </button>
+      <a href="/customers" class="btn btn-outline-info btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-people-fill"></i> View Users
+      </a>
+      <a href="/settings" class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 text-light">
+        <i class="bi bi-gear-fill"></i> System Settings
+      </a>
+      <button class="btn btn-outline-success btn-sm d-flex align-items-center gap-1" data-bs-toggle="modal" data-bs-target="#aiChatModal">
+        <i class="bi bi-robot"></i> AI Chat
+      </button>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button class="btn btn-outline-secondary btn-sm" id="btnRefreshData" onclick="fetchMetricsAndUpdate()">
+        <i class="bi bi-arrow-clockwise me-1"></i> Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <!-- 2. LIVE METRIC TILES GRID (8 TILES) -->
+  <div class="row g-3 mb-4">
+
+    <!-- Tile 1: Signal Strength (RSRP) -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">Signal Strength (RSRP)</span>
+            <div class="stat-icon p-2 rounded bg-danger-subtle text-danger" id="rsrpIconBox">
+              <i class="bi bi-broadcast fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span id="metric-rsrp" class="display-6 fw-bold text-light animate-pulse-telemetry">-48</span>
+            <span class="fs-6 text-secondary">dBm</span>
+          </div>
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="progress flex-grow-1 me-2 bg-dark-input" style="height: 6px;">
+              <div id="rsrp-progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 85%;"></div>
+            </div>
+            <div class="signal-bars" id="rsrpSignalBars">
+              <div class="signal-bar active-green" style="height: 6px;"></div>
+              <div class="signal-bar active-green" style="height: 10px;"></div>
+              <div class="signal-bar active-green" style="height: 14px;"></div>
+              <div class="signal-bar active-green" style="height: 18px;"></div>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between fs-8 text-secondary">
+            <span>Target: &gt;-85 dBm</span>
+            <span id="rsrp-status-badge" class="badge bg-success-subtle text-success border border-success-subtle">Excellent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tile 2: Latency (RTT) -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">Latency (RTT)</span>
+            <div class="stat-icon p-2 rounded bg-info-subtle text-info">
+              <i class="bi bi-lightning-charge-fill fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span id="metric-rtt" class="display-6 fw-bold text-light animate-pulse-telemetry">18</span>
+            <span class="fs-6 text-secondary">ms</span>
+            <span id="rtt-trend-icon" class="ms-auto text-success fs-6 fw-bold">
+              <i class="bi bi-arrow-down-short"></i> <span id="rtt-delta">1ms</span>
+            </span>
+          </div>
+          <div class="progress mb-2 bg-dark-input" style="height: 6px;">
+            <div id="rtt-progress-bar" class="progress-bar bg-info" role="progressbar" style="width: 88%;"></div>
+          </div>
+          <div class="d-flex justify-content-between fs-8 text-secondary">
+            <span>Target: &lt;15 ms</span>
+            <span id="rtt-status-badge" class="badge bg-info-subtle text-info border border-info-subtle">Ultra-Low</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tile 3: Active Users -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">Active Users (UE)</span>
+            <div class="stat-icon p-2 rounded bg-success-subtle text-success">
+              <i class="bi bi-people-fill fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span id="metric-users" class="display-6 fw-bold text-light animate-pulse-telemetry">1,420</span>
+            <span class="fs-6 text-secondary">UE</span>
+            <span id="users-delta-badge" class="ms-auto badge bg-success-subtle text-success fs-9">
+              <i class="bi bi-arrow-up-short"></i> +14
+            </span>
+          </div>
+          <div class="progress mb-2 bg-dark-input" style="height: 6px;">
+            <div id="users-progress-bar" class="progress-bar bg-success" role="progressbar" style="width: 57%;"></div>
+          </div>
+          <div class="d-flex justify-content-between fs-8 text-secondary">
+            <span>Capacity: 2,500</span>
+            <span id="users-load-text" class="text-success fw-semibold">57% Load</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tile 4: Network Uptime -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">Network Uptime</span>
+            <div class="stat-icon p-2 rounded bg-primary-subtle text-primary">
+              <i class="bi bi-shield-check fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span id="metric-uptime" class="display-6 fw-bold text-light">99.98</span>
+            <span class="fs-6 text-secondary">%</span>
+          </div>
+          <div class="progress mb-2 bg-dark-input" style="height: 6px;">
+            <div class="progress-bar bg-primary" role="progressbar" style="width: 99.98%;"></div>
+          </div>
+          <div class="d-flex justify-content-between fs-8 text-secondary">
+            <span>SLA Target: 99.9%</span>
+            <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Operational</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tile 5: Total E-SIMs Provisioned -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">Total E-SIMs Provisioned</span>
+            <div class="stat-icon p-2 rounded bg-warning-subtle text-warning">
+              <i class="bi bi-card-checklist fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span id="metric-esims" class="display-6 fw-bold text-light">8,492</span>
+            <span class="fs-6 text-secondary">e-SIMs</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2 fs-8 text-secondary">
+            <span class="badge bg-warning-subtle text-warning border border-warning-subtle">+128 today</span>
+            <span class="text-secondary">99.1% Active</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tile 6: Active Virtual Cells -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">Active Virtual Cells</span>
+            <div class="stat-icon p-2 rounded bg-info-subtle text-info">
+              <i class="bi bi-grid-3x3-gap-fill fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span id="metric-cells-count" class="display-6 fw-bold text-light">6</span>
+            <span class="fs-6 text-secondary">Cells</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2 fs-8 text-secondary">
+            <span class="badge bg-info-subtle text-info border border-info-subtle">gNodeB Slices</span>
+            <span class="text-success fw-semibold">6 / 6 Online</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tile 7: Revenue (HOPE PAY) -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">Revenue (HOPE PAY)</span>
+            <div class="stat-icon p-2 rounded bg-success-subtle text-success">
+              <i class="bi bi-currency-dollar fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-1 mb-1">
+            <span class="fs-4 text-success">$</span>
+            <span id="metric-revenue" class="display-6 fw-bold text-light">142,850.00</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2 fs-8 text-secondary">
+            <span id="revenue-delta" class="badge bg-success-subtle text-success border border-success-subtle">+$49.99 live</span>
+            <span class="text-secondary">24h Volume</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tile 8: OTP Verifications (24h) -->
+    <div class="col-12 col-sm-6 col-lg-3">
+      <div class="card stat-card bg-dark-card border border-secondary-subtle h-100 shadow-sm position-relative overflow-hidden">
+        <div class="card-body p-3">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="text-secondary fs-8 fw-semibold text-uppercase tracking-wider">OTP Verifications (24h)</span>
+            <div class="stat-icon p-2 rounded bg-primary-subtle text-primary">
+              <i class="bi bi-shield-lock-fill fs-5"></i>
+            </div>
+          </div>
+          <div class="d-flex align-items-baseline gap-2 mb-1">
+            <span id="metric-otp" class="display-6 fw-bold text-light">3,841</span>
+            <span class="fs-6 text-secondary">OTPs</span>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mt-2 fs-8 text-secondary">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">99.4% Auth</span>
+            <span class="text-secondary">Secure 2FA</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 3. REAL-TIME CHART.JS CHARTS GRID -->
+  <div class="row g-4 mb-4">
+    <!-- Chart 1: RSRP Line Chart -->
+    <div class="col-12 col-xl-6">
+      <div class="card bg-dark-card border border-secondary-subtle h-100 shadow-sm">
+        <div class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center">
+          <h6 class="m-0 fw-bold text-light d-flex align-items-center fs-7">
+            <i class="bi bi-activity text-danger me-2"></i> RSRP Signal Strength (Last 60s)
+          </h6>
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle fs-9">Live dBm</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart-card-body">
+            <canvas id="rsrpChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 2: RTT Latency Line Chart -->
+    <div class="col-12 col-xl-6">
+      <div class="card bg-dark-card border border-secondary-subtle h-100 shadow-sm">
+        <div class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center">
+          <h6 class="m-0 fw-bold text-light d-flex align-items-center fs-7">
+            <i class="bi bi-lightning text-info me-2"></i> RTT Latency Trend (Last 60s)
+          </h6>
+          <span class="badge bg-info-subtle text-info border border-info-subtle fs-9">Live ms</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart-card-body">
+            <canvas id="rttChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 3: Active Users Area Chart -->
+    <div class="col-12 col-xl-6">
+      <div class="card bg-dark-card border border-secondary-subtle h-100 shadow-sm">
+        <div class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center">
+          <h6 class="m-0 fw-bold text-light d-flex align-items-center fs-7">
+            <i class="bi bi-people text-success me-2"></i> Active Terminals (UE) Area Chart (Last 60s)
+          </h6>
+          <span class="badge bg-success-subtle text-success border border-success-subtle fs-9">Connected UE</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart-card-body">
+            <canvas id="usersChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart 4: Data Usage Bar Chart (per cell) -->
+    <div class="col-12 col-xl-6">
+      <div class="card bg-dark-card border border-secondary-subtle h-100 shadow-sm">
+        <div class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center">
+          <h6 class="m-0 fw-bold text-light d-flex align-items-center fs-7">
+            <i class="bi bi-bar-chart-line text-warning me-2"></i> Per-Cell Data Throughput (Gbps)
+          </h6>
+          <span class="badge bg-warning-subtle text-warning border border-warning-subtle fs-9">gNodeB Slices</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="chart-card-body">
+            <canvas id="cellDataChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 4. VIRTUAL CELL GRID & 5. SYSTEM HEALTH PANEL ROW -->
+  <div class="row g-4 mb-4">
+    <!-- 4. Virtual Cell Grid -->
+    <div class="col-12 col-xl-8">
+      <div class="card bg-dark-card border border-secondary-subtle h-100 shadow-sm">
+        <div class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center">
+          <h5 class="m-0 fw-bold text-light d-flex align-items-center">
+            <i class="bi bi-grid-3x3-gap-fill text-info me-2"></i> Virtual Cell Sector Grid
+          </h5>
+          <span class="badge bg-dark border border-secondary-subtle text-secondary fs-8">6 Active gNodeB Sectors</span>
+        </div>
+        <div class="card-body p-3">
+          <div class="row g-3" id="virtualCellGrid">
+            <!-- Cell Cards dynamically rendered here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. System Health Panel -->
+    <div class="col-12 col-xl-4">
+      <div class="card bg-dark-card border border-secondary-subtle h-100 shadow-sm">
+        <div class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center">
+          <h5 class="m-0 fw-bold text-light d-flex align-items-center">
+            <i class="bi bi-cpu text-warning me-2"></i> System Health
+          </h5>
+          <span class="badge bg-success-subtle text-success border border-success-subtle fs-8" id="sysHealthBadge">Healthy</span>
+        </div>
+        <div class="card-body p-3">
+          <!-- CPU Usage -->
+          <div class="mb-3 p-2 bg-dark-input rounded border border-secondary-subtle">
+            <div class="d-flex justify-content-between align-items-center mb-1 fs-7">
+              <span class="text-light fw-semibold"><i class="bi bi-cpu me-1 text-info"></i> CPU Usage</span>
+              <span id="sys-cpu-val" class="fw-bold text-info">24.5%</span>
+            </div>
+            <div class="progress bg-dark" style="height: 6px;">
+              <div id="sys-cpu-bar" class="progress-bar bg-info" role="progressbar" style="width: 24.5%;"></div>
+            </div>
+          </div>
+
+          <!-- Memory Usage -->
+          <div class="mb-3 p-2 bg-dark-input rounded border border-secondary-subtle">
+            <div class="d-flex justify-content-between align-items-center mb-1 fs-7">
+              <span class="text-light fw-semibold"><i class="bi bi-memory me-1 text-primary"></i> Memory Usage</span>
+              <span id="sys-mem-val" class="fw-bold text-primary">42.1%</span>
+            </div>
+            <div class="progress bg-dark" style="height: 6px;">
+              <div id="sys-mem-bar" class="progress-bar bg-primary" role="progressbar" style="width: 42.1%;"></div>
+            </div>
+          </div>
+
+          <!-- DB Connections -->
+          <div class="mb-3 p-2 bg-dark-input rounded border border-secondary-subtle">
+            <div class="d-flex justify-content-between align-items-center mb-1 fs-7">
+              <span class="text-light fw-semibold"><i class="bi bi-database me-1 text-success"></i> PostgreSQL DB</span>
+              <span id="sys-db-val" class="fw-bold text-success">18 / 100 Active</span>
+            </div>
+            <div class="progress bg-dark" style="height: 6px;">
+              <div id="sys-db-bar" class="progress-bar bg-success" role="progressbar" style="width: 18%;"></div>
+            </div>
+          </div>
+
+          <!-- Redis Cache Status -->
+          <div class="mb-3 p-2 bg-dark-input rounded border border-secondary-subtle d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2 fs-7">
+              <i class="bi bi-layers-fill text-danger"></i>
+              <span class="text-light fw-semibold">Redis In-Memory Cache</span>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle fs-8 d-flex align-items-center gap-1" id="sys-redis-badge">
+              <span class="pulse-indicator bg-success" style="width: 6px; height: 6px;"></span>
+              CONNECTED
+            </span>
+          </div>
+
+          <!-- MinIO Storage Status -->
+          <div class="p-2 bg-dark-input rounded border border-secondary-subtle d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-2 fs-7">
+              <i class="bi bi-hdd-network-fill text-warning"></i>
+              <span class="text-light fw-semibold">MinIO S3 Storage</span>
+            </div>
+            <span class="badge bg-success-subtle text-success border border-success-subtle fs-8 d-flex align-items-center gap-1" id="sys-minio-badge">
+              <span class="pulse-indicator bg-success" style="width: 6px; height: 6px;"></span>
+              HEALTHY
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 6. RECENT ACTIVITY FEED -->
+  <div class="row g-4">
+    <div class="col-12">
+      <div class="card bg-dark-card border border-secondary-subtle shadow-sm">
+        <div class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center">
+          <h5 class="m-0 fw-bold text-light d-flex align-items-center">
+            <i class="bi bi-clock-history text-info me-2"></i> Live Infrastructure Activity Log
+          </h5>
+          <span class="badge bg-info-subtle text-info border border-info-subtle fs-8">Real-time Feed</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="activity-feed-scroll" id="activityFeedList">
+            <!-- Activity feed items dynamically render here -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL 1: Provision E-SIM -->
+<div class="modal fade" id="provisionEsimModal" tabindex="-1" aria-labelledby="provisionEsimModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-dark-card border border-secondary-subtle text-light shadow-lg">
+      <div class="modal-header border-bottom border-secondary-subtle">
+        <h5 class="modal-title fw-bold" id="provisionEsimModalLabel">
+          <i class="bi bi-card-checklist text-primary me-2"></i> Provision New 5G E-SIM
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form id="provisionEsimForm" onsubmit="handleProvisionEsim(event)">
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label fs-7 fw-semibold text-secondary">Customer Identifier / Phone</label>
+            <input type="text" class="form-control bg-dark-input text-light border-secondary-subtle" id="esimCustomer" placeholder="+1 (555) 234-5678 or user@tu5g.com" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fs-7 fw-semibold text-secondary">5G Cellular Plan</label>
+            <select class="form-select bg-dark-input text-light border-secondary-subtle" id="esimPlan">
+              <option value="Unlimited 5G Max">Unlimited 5G Max (Gigabit / Low Latency)</option>
+              <option value="Starter 5G Plan">Starter 5G Plan (100GB High-Speed)</option>
+              <option value="Enterprise Slice 5G">Enterprise Slice 5G (Dedicated Bandwidth)</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fs-7 fw-semibold text-secondary">Assign Sector Cell</label>
+            <select class="form-select bg-dark-input text-light border-secondary-subtle" id="esimCell">
+              <option value="vCell-01-MNC01">vCell-01-MNC01 (Macro gNodeB)</option>
+              <option value="vCell-02-MNC01">vCell-02-MNC01 (Micro Cell)</option>
+              <option value="vCell-03-MNC02">vCell-03-MNC02 (Urban Dense)</option>
+              <option value="vCell-04-MNC02">vCell-04-MNC02 (Highway Relay)</option>
+              <option value="vCell-05-MNC03">vCell-05-MNC03 (Suburban Slice)</option>
+              <option value="vCell-06-MNC03">vCell-06-MNC03 (Industrial IoT)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer border-top border-secondary-subtle">
+          <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-sm px-4">Activate E-SIM</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL 2: AI Network Chat Assistant -->
+<div class="modal fade" id="aiChatModal" tabindex="-1" aria-labelledby="aiChatModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content bg-dark-card border border-secondary-subtle text-light shadow-lg">
+      <div class="modal-header border-bottom border-secondary-subtle">
+        <h5 class="modal-title fw-bold d-flex align-items-center" id="aiChatModalLabel">
+          <i class="bi bi-robot text-success me-2 fs-4"></i> TU5G AI Copilot & Network Assistant
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body p-3">
+        <div id="aiChatWindow" class="p-3 bg-dark-input rounded border border-secondary-subtle mb-3" style="height: 320px; overflow-y: auto;">
+          <div class="d-flex mb-3">
+            <div class="avatar-sm bg-success text-white rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+              <i class="bi bi-robot"></i>
+            </div>
+            <div class="p-3 bg-dark-card rounded border border-secondary-subtle fs-7 text-light" style="max-width: 80%;">
+              Greetings! I am the TU5G AI Copilot. All 6 virtual cell sectors are operating normally with stable sub-20ms latencies. How can I assist you with telemetry or cell management?
+            </div>
+          </div>
+        </div>
+        <form id="aiChatForm" onsubmit="handleAiChatSubmit(event)" class="d-flex gap-2">
+          <input type="text" class="form-control bg-dark-input text-light border-secondary-subtle" id="aiChatInput" placeholder="Ask AI: e.g. 'Check vCell-01 performance' or 'Show latency report'..." required>
+          <button type="submit" class="btn btn-success px-4 d-flex align-items-center gap-1">
+            <i class="bi bi-send-fill"></i> Send
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/**
+ * TU5G Live Network Operations Dashboard Engine
+ * Handles WebSocket telemetry connection, real-time Chart.js streaming,
+ * metric updates, theme switching (Light/Dark/Holographic), Virtual Cell grid,
+ * system health polling, and activity logging.
+ */
+
+// Application State
+const DashboardState = {
+  theme: localStorage.getItem("tu5g_theme") || "dark",
+  ws: null,
+  reconnectAttempts: 0,
+  maxReconnectAttempts: 10,
+  reconnectDelay: 2000,
+  wsTimer: null,
+  
+  // Charts
+  rsrpChart: null,
+  rttChart: null,
+  usersChart: null,
+  cellDataChart: null,
+  maxDataPoints: 60, // 60 seconds history
+  
+  // Metrics memory
+  rsrp: -48,
+  rtt: 18,
+  prevRtt: 18,
+  users: 1420,
+  initialUsers: 1406,
+  esimsCount: 8492,
+  cellsCount: 6,
+  revenue: 142850.00,
+  otpCount: 3841,
+  
+  // Virtual Cells database
+  virtualCells: [
+    { id: "vCell-01-MNC01", mccMnc: "310/410", type: "gNodeB (Macro)", rsrp: -48, rtt: 16, users: 412, capacity: 500, status: "Active" },
+    { id: "vCell-02-MNC01", mccMnc: "310/410", type: "gNodeB (Micro)", rsrp: -52, rtt: 18, users: 284, capacity: 500, status: "Active" },
+    { id: "vCell-03-MNC02", mccMnc: "311/480", type: "gNodeB (Macro)", rsrp: -61, rtt: 22, users: 310, capacity: 500, status: "Active" },
+    { id: "vCell-04-MNC02", mccMnc: "311/480", type: "gNodeB (Urban)", rsrp: -45, rtt: 15, users: 198, capacity: 500, status: "Active" },
+    { id: "vCell-05-MNC03", mccMnc: "310/260", type: "gNodeB (Suburban)", rsrp: -74, rtt: 28, users: 126, capacity: 500, status: "Degraded" },
+    { id: "vCell-06-MNC03", mccMnc: "310/260", type: "gNodeB (Industrial)", rsrp: -50, rtt: 17, users: 88, capacity: 500, status: "Active" }
+  ]
+};
+
+// Initialize Dashboard when DOM is ready
+document.addEventListener("DOMContentLoaded", () => {
+  initTheme();
+  initCharts();
+  renderVirtualCellGrid();
+  initActivityLog();
+  connectWebSocket();
+  fetchSystemMetrics();
+  
+  // Periodic system health refresh every 5 seconds
+  setInterval(fetchSystemMetrics, 5000);
+
+  // Periodic random activity event generator every 7 seconds
+  setInterval(simulateLiveActivityEvent, 7000);
+});
+
+/**
+ * 1. Theme Management (Light, Dark, Ultra Holographic)
+ */
+function initTheme() {
+  setDashboardTheme(DashboardState.theme, false);
+}
+
+function setDashboardTheme(mode, save = true) {
+  DashboardState.theme = mode;
+  if (save) localStorage.setItem("tu5g_theme", mode);
+
+  const html = document.documentElement;
+  const body = document.body;
+
+  // Reset theme attributes
+  html.setAttribute("data-theme", mode === "holo" ? "dark" : mode);
+  html.setAttribute("data-bs-theme", mode === "light" ? "light" : "dark");
+
+  if (mode === "holo") {
+    body.classList.add("theme-holo");
+  } else {
+    body.classList.remove("theme-holo");
+  }
+
+  // Update theme switcher UI buttons
+  ["Light", "Dark", "Holo"].forEach(m => {
+    const btn = document.getElementById(`themeBtn${m}`);
+    if (btn) {
+      if (m.toLowerCase() === mode) {
+        btn.classList.add("active", "text-white");
+        btn.classList.remove("text-secondary");
+      } else {
+        btn.classList.remove("active", "text-white");
+        btn.classList.add("text-secondary");
+      }
+    }
+  });
+
+  // Update Chart colors if initialized
+  updateChartThemes();
+}
+
+/**
+ * 2. Chart.js Initialization and Updates
+ */
+function getChartColors() {
+  const isHolo = DashboardState.theme === "holo";
+  const isDark = DashboardState.theme === "dark" || isHolo;
+
+  return {
+    text: isDark ? "#94a3b8" : "#64748b",
+    grid: isHolo ? "rgba(0, 243, 255, 0.12)" : isDark ? "rgba(255, 255, 255, 0.06)" : "rgba(0, 0, 0, 0.06)",
+    rsrp: isHolo ? "#ff007f" : "#ff6384",
+    rtt: isHolo ? "#00f3ff" : "#36a2eb",
+    users: isHolo ? "#00ff66" : "#4bc0c0",
+    bars: isHolo 
+      ? ["#00f3ff", "#ff007f", "#00ff66", "#9d00ff", "#ffcc00", "#00f3ff"]
+      : ["#36a2eb", "#ff6384", "#4bc0c0", "#ffc107", "#0dcaf0", "#6f42c1"]
+  };
+}
+
+function initCharts() {
+  const colors = getChartColors();
+  const initialLabels = generateTimeLabels(30);
+
+  // Chart 1: RSRP Line Chart
+  const ctxRsrp = document.getElementById("rsrpChartCanvas")?.getContext("2d");
+  if (ctxRsrp) {
+    DashboardState.rsrpChart = new Chart(ctxRsrp, {
+      type: "line",
+      data: {
+        labels: [...initialLabels],
+        datasets: [{
+          label: "RSRP (dBm)",
+          data: Array(30).fill(-48).map(() => -48 + Math.floor(Math.random() * 8 - 4)),
+          borderColor: colors.rsrp,
+          backgroundColor: "rgba(255, 0, 127, 0.12)",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0
+        }]
+      },
+      options: createCommonChartOptions(colors, "dBm", -120, -40)
+    });
+  }
+
+  // Chart 2: RTT Latency Line Chart
+  const ctxRtt = document.getElementById("rttChartCanvas")?.getContext("2d");
+  if (ctxRtt) {
+    DashboardState.rttChart = new Chart(ctxRtt, {
+      type: "line",
+      data: {
+        labels: [...initialLabels],
+        datasets: [{
+          label: "RTT Latency (ms)",
+          data: Array(30).fill(18).map(() => 18 + Math.floor(Math.random() * 6 - 3)),
+          borderColor: colors.rtt,
+          backgroundColor: "rgba(0, 243, 255, 0.12)",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 0
+        }]
+      },
+      options: createCommonChartOptions(colors, "ms", 0, 80)
+    });
+  }
+
+  // Chart 3: Active Users Area Chart
+  const ctxUsers = document.getElementById("usersChartCanvas")?.getContext("2d");
+  if (ctxUsers) {
+    DashboardState.usersChart = new Chart(ctxUsers, {
+      type: "line",
+      data: {
+        labels: [...initialLabels],
+        datasets: [{
+          label: "Active Users (UE)",
+          data: Array(30).fill(1420).map(() => 1420 + Math.floor(Math.random() * 30 - 15)),
+          borderColor: colors.users,
+          backgroundColor: "rgba(0, 255, 102, 0.15)",
+          borderWidth: 2,
+          fill: true,
+          tension: 0.4,
+          pointRadius: 0
+        }]
+      },
+      options: createCommonChartOptions(colors, "UE", 0, 2500)
+    });
+  }
+
+  // Chart 4: Per-Cell Data Usage Bar Chart
+  const ctxCell = document.getElementById("cellDataChartCanvas")?.getContext("2d");
+  if (ctxCell) {
+    DashboardState.cellDataChart = new Chart(ctxCell, {
+      type: "bar",
+      data: {
+        labels: ["vCell-01", "vCell-02", "vCell-03", "vCell-04", "vCell-05", "vCell-06"],
+        datasets: [{
+          label: "Throughput (Gbps)",
+          data: [4.2, 3.8, 2.9, 4.5, 1.8, 3.1],
+          backgroundColor: colors.bars,
+          borderRadius: 6,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { mode: "index", intersect: false }
+        },
+        scales: {
+          x: {
+            grid: { color: colors.grid },
+            ticks: { color: colors.text, font: { size: 10 } }
+          },
+          y: {
+            grid: { color: colors.grid },
+            ticks: { color: colors.text, font: { size: 10 } },
+            beginAtZero: true,
+            max: 6
+          }
+        }
+      }
+    });
+  }
+}
+
+function generateTimeLabels(count) {
+  const labels = [];
+  const now = new Date();
+  for (let i = count - 1; i >= 0; i--) {
+    const t = new Date(now.getTime() - i * 1000);
+    labels.push(t.toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" }));
+  }
+  return labels;
+}
+
+function createCommonChartOptions(colors, unit, min, max) {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => `${ctx.dataset.label}: ${ctx.raw} ${unit}`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: colors.grid },
+        ticks: { color: colors.text, font: { size: 9 }, maxTicksLimit: 8 }
+      },
+      y: {
+        min: min,
+        max: max,
+        grid: { color: colors.grid },
+        ticks: { color: colors.text, font: { size: 9 } }
+      }
+    }
+  };
+}
+
+function updateChartThemes() {
+  const colors = getChartColors();
+  [DashboardState.rsrpChart, DashboardState.rttChart, DashboardState.usersChart, DashboardState.cellDataChart].forEach(chart => {
+    if (!chart) return;
+    if (chart.options.scales.x) {
+      chart.options.scales.x.grid.color = colors.grid;
+      chart.options.scales.x.ticks.color = colors.text;
+    }
+    if (chart.options.scales.y) {
+      chart.options.scales.y.grid.color = colors.grid;
+      chart.options.scales.y.ticks.color = colors.text;
+    }
+    chart.update();
+  });
+}
+
+/**
+ * 3. WebSocket Real-time Telemetry Connection
+ */
+function connectWebSocket() {
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  const token = localStorage.getItem("token") || localStorage.getItem("access_token") || "mock_jwt_token";
+  const wsUrl = `${protocol}//${window.location.host}/telemetry/ws?token=${encodeURIComponent(token)}`;
+
+  const badge = document.getElementById("wsStatusBadge");
+  const textEl = document.getElementById("wsStatusText");
+
+  try {
+    DashboardState.ws = new WebSocket(wsUrl);
+
+    DashboardState.ws.onopen = () => {
+      console.log("WebSocket Telemetry Stream Connected");
+      DashboardState.reconnectAttempts = 0;
+      if (badge) {
+        badge.className = "badge bg-success-subtle text-success border border-success-subtle py-2 px-3 rounded-pill d-flex align-items-center gap-2 fs-7";
+        if (textEl) textEl.textContent = "Live Stream Synchronized";
+      }
+      if (window.TU5G_Notifications) {
+        window.TU5G_Notifications.success("Live cellular telemetry stream synchronized.");
+      }
+    };
+
+    DashboardState.ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        handleTelemetryPacket(data);
+      } catch (e) {
+        console.error("Error parsing telemetry packet:", e);
+      }
+    };
+
+    DashboardState.ws.onclose = () => {
+      console.warn("WebSocket Connection Closed");
+      if (badge) {
+        badge.className = "badge bg-danger-subtle text-danger border border-danger-subtle py-2 px-3 rounded-pill d-flex align-items-center gap-2 fs-7";
+        if (textEl) textEl.textContent = "Reconnecting Stream...";
+      }
+      attemptWsReconnect();
+    };
+
+    DashboardState.ws.onerror = (err) => {
+      console.error("WebSocket error:", err);
+      DashboardState.ws.close();
+    };
+
+  } catch (err) {
+    console.error("WebSocket init error:", err);
+    attemptWsReconnect();
+  }
+}
+
+function attemptWsReconnect() {
+  if (DashboardState.reconnectAttempts < DashboardState.maxReconnectAttempts) {
+    DashboardState.reconnectAttempts++;
+    const delay = DashboardState.reconnectDelay * Math.pow(1.3, DashboardState.reconnectAttempts - 1);
+    setTimeout(connectWebSocket, delay);
+  }
+}
+
+/**
+ * Handle incoming 1s WebSocket telemetry packet
+ */
+function handleTelemetryPacket(data) {
+  // Extract metrics
+  const rsrpVal = typeof data.rsrp === "number" ? data.rsrp : -48;
+  const rttVal = typeof data.rtt === "number" ? data.rtt : 18;
+  const usersVal = typeof data.users === "number" ? data.users * 12 + 200 : 1420 + Math.floor(Math.random() * 20 - 10);
+
+  DashboardState.prevRtt = DashboardState.rtt;
+  DashboardState.rsrp = rsrpVal;
+  DashboardState.rtt = rttVal;
+  DashboardState.users = usersVal;
+
+  // 1. Update RSRP Stat Tile
+  const rsrpEl = document.getElementById("metric-rsrp");
+  const rsrpProg = document.getElementById("rsrp-progress-bar");
+  const rsrpBadge = document.getElementById("rsrp-status-badge");
+  if (rsrpEl) rsrpEl.textContent = rsrpVal;
+  
+  const rsrpPct = Math.min(100, Math.max(0, ((rsrpVal + 120) / 80) * 100));
+  if (rsrpProg) {
+    rsrpProg.style.width = rsrpPct + "%";
+    rsrpProg.className = rsrpVal >= -85 ? "progress-bar bg-success" : rsrpVal >= -105 ? "progress-bar bg-warning" : "progress-bar bg-danger";
+  }
+  if (rsrpBadge) {
+    if (rsrpVal >= -85) {
+      rsrpBadge.className = "badge bg-success-subtle text-success border border-success-subtle";
+      rsrpBadge.textContent = "Excellent";
+    } else if (rsrpVal >= -105) {
+      rsrpBadge.className = "badge bg-warning-subtle text-warning border border-warning-subtle";
+      rsrpBadge.textContent = "Fair";
+    } else {
+      rsrpBadge.className = "badge bg-danger-subtle text-danger border border-danger-subtle";
+      rsrpBadge.textContent = "Poor";
+    }
+  }
+
+  // 2. Update RTT Stat Tile
+  const rttEl = document.getElementById("metric-rtt");
+  const rttProg = document.getElementById("rtt-progress-bar");
+  const rttDeltaEl = document.getElementById("rtt-delta");
+  const rttTrendIcon = document.getElementById("rtt-trend-icon");
+
+  if (rttEl) rttEl.textContent = rttVal;
+  if (rttProg) {
+    const rttPct = Math.min(100, Math.max(10, 100 - (rttVal / 50) * 100));
+    rttProg.style.width = rttPct + "%";
+  }
+
+  const diffRtt = rttVal - DashboardState.prevRtt;
+  if (rttTrendIcon && rttDeltaEl) {
+    if (diffRtt < 0) {
+      rttTrendIcon.className = "ms-auto text-success fs-6 fw-bold";
+      rttTrendIcon.innerHTML = `<i class="bi bi-arrow-down-short"></i> ${Math.abs(diffRtt)}ms`;
+    } else if (diffRtt > 0) {
+      rttTrendIcon.className = "ms-auto text-danger fs-6 fw-bold";
+      rttTrendIcon.innerHTML = `<i class="bi bi-arrow-up-short"></i> ${diffRtt}ms`;
+    } else {
+      rttTrendIcon.className = "ms-auto text-secondary fs-6 fw-bold";
+      rttTrendIcon.innerHTML = `<i class="bi bi-dash"></i> 0ms`;
+    }
+  }
+
+  // 3. Update Active Users Stat Tile
+  const usersEl = document.getElementById("metric-users");
+  const usersProg = document.getElementById("users-progress-bar");
+  const usersLoadText = document.getElementById("users-load-text");
+  const usersDeltaBadge = document.getElementById("users-delta-badge");
+
+  if (usersEl) usersEl.textContent = usersVal.toLocaleString();
+  const usersPct = Math.min(100, Math.round((usersVal / 2500) * 100));
+  if (usersProg) usersProg.style.width = usersPct + "%";
+  if (usersLoadText) usersLoadText.textContent = `${usersPct}% Load`;
+
+  const userDelta = usersVal - DashboardState.initialUsers;
+  if (usersDeltaBadge) {
+    if (userDelta >= 0) {
+      usersDeltaBadge.className = "ms-auto badge bg-success-subtle text-success fs-9";
+      usersDeltaBadge.innerHTML = `<i class="bi bi-arrow-up-short"></i> +${userDelta}`;
+    } else {
+      usersDeltaBadge.className = "ms-auto badge bg-danger-subtle text-danger fs-9";
+      usersDeltaBadge.innerHTML = `<i class="bi bi-arrow-down-short"></i> ${userDelta}`;
+    }
+  }
+
+  // 4. Update Live Streaming Charts
+  const timeLabel = new Date().toLocaleTimeString([], { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
+
+  // RSRP Chart Push
+  if (DashboardState.rsrpChart) {
+    pushChartData(DashboardState.rsrpChart, timeLabel, rsrpVal);
+  }
+  // RTT Chart Push
+  if (DashboardState.rttChart) {
+    pushChartData(DashboardState.rttChart, timeLabel, rttVal);
+  }
+  // Users Chart Push
+  if (DashboardState.usersChart) {
+    pushChartData(DashboardState.usersChart, timeLabel, usersVal);
+  }
+  // Per-Cell Data Throughput Chart Update
+  if (DashboardState.cellDataChart) {
+    const updatedData = DashboardState.cellDataChart.data.datasets[0].data.map(v => 
+      parseFloat(Math.min(5.8, Math.max(1.2, v + (Math.random() * 0.4 - 0.2))).toFixed(2))
+    );
+    DashboardState.cellDataChart.data.datasets[0].data = updatedData;
+    DashboardState.cellDataChart.update("none");
+  }
+
+  // 5. Update Virtual Cell Sector Grid values slightly
+  updateVirtualCellMetrics(rsrpVal, rttVal);
+}
+
+function pushChartData(chart, label, value) {
+  chart.data.labels.push(label);
+  chart.data.datasets[0].data.push(value);
+
+  if (chart.data.labels.length > DashboardState.maxDataPoints) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+  }
+
+  chart.update("none");
+}
+
+/**
+ * 4. Virtual Cell Grid Renderer and Updates
+ */
+function renderVirtualCellGrid() {
+  const gridContainer = document.getElementById("virtualCellGrid");
+  if (!gridContainer) return;
+
+  gridContainer.innerHTML = DashboardState.virtualCells.map(cell => {
+    const isDegraded = cell.status === "Degraded";
+    const statusBadge = isDegraded
+      ? `<span class="badge bg-warning-subtle text-warning border border-warning-subtle fs-9"><i class="bi bi-exclamation-triangle-fill me-1"></i>Degraded</span>`
+      : `<span class="badge bg-success-subtle text-success border border-success-subtle fs-9"><span class="pulse-indicator bg-success me-1"></span>Active</span>`;
+
+    return `
+      <div class="col-12 col-md-6 col-lg-4">
+        <div class="card bg-dark-input border border-secondary-subtle rounded-3 p-3 h-100 shadow-sm">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <span class="fw-bold text-light fs-7">${cell.id}</span>
+            ${statusBadge}
+          </div>
+          <div class="d-flex justify-content-between fs-8 text-secondary mb-2">
+            <span>MCC/MNC: <strong class="text-light">${cell.mccMnc}</strong></span>
+            <span>Type: <strong class="text-light">${cell.type}</strong></span>
+          </div>
+          <div class="row g-2 text-center fs-8">
+            <div class="col-4 bg-dark-card p-2 rounded border border-secondary-subtle">
+              <div class="text-secondary fs-9">RSRP</div>
+              <div class="fw-bold ${cell.rsrp >= -85 ? 'text-success' : 'text-warning'}" id="grid-rsrp-${cell.id}">${cell.rsrp} dBm</div>
+            </div>
+            <div class="col-4 bg-dark-card p-2 rounded border border-secondary-subtle">
+              <div class="text-secondary fs-9">RTT</div>
+              <div class="fw-bold text-info" id="grid-rtt-${cell.id}">${cell.rtt} ms</div>
+            </div>
+            <div class="col-4 bg-dark-card p-2 rounded border border-secondary-subtle">
+              <div class="text-secondary fs-9">UE Load</div>
+              <div class="fw-bold text-light" id="grid-users-${cell.id}">${cell.users}/${cell.capacity}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("");
+}
+
+function updateVirtualCellMetrics(baseRsrp, baseRtt) {
+  DashboardState.virtualCells.forEach((cell, idx) => {
+    cell.rsrp = baseRsrp + (idx * 3 - 6);
+    cell.rtt = Math.max(10, baseRtt + (idx * 2 - 3));
+    cell.users = Math.min(500, Math.max(50, cell.users + Math.floor(Math.random() * 5 - 2)));
+
+    const rsrpEl = document.getElementById(`grid-rsrp-${cell.id}`);
+    const rttEl = document.getElementById(`grid-rtt-${cell.id}`);
+    const usersEl = document.getElementById(`grid-users-${cell.id}`);
+
+    if (rsrpEl) rsrpEl.textContent = `${cell.rsrp} dBm`;
+    if (rttEl) rttEl.textContent = `${cell.rtt} ms`;
+    if (usersEl) usersEl.textContent = `${cell.users}/${cell.capacity}`;
+  });
+}
+
+/**
+ * 5. System Health Polling (/telemetry/metrics endpoint)
+ */
+async function fetchSystemMetrics() {
+  try {
+    const response = await fetch("/telemetry/metrics");
+    if (!response.ok) throw new Error("Failed to fetch metrics");
+    const data = await response.json();
+
+    const cpuVal = data.cpu_usage_pct || 24.5;
+    const memVal = data.memory_usage_pct || 42.1;
+    const dbVal = data.db_connections || 18;
+    const dbMax = data.db_max_connections || 100;
+
+    const cpuEl = document.getElementById("sys-cpu-val");
+    const cpuBar = document.getElementById("sys-cpu-bar");
+    if (cpuEl) cpuEl.textContent = `${cpuVal}%`;
+    if (cpuBar) cpuBar.style.width = `${cpuVal}%`;
+
+    const memEl = document.getElementById("sys-mem-val");
+    const memBar = document.getElementById("sys-mem-bar");
+    if (memEl) memEl.textContent = `${memVal}%`;
+    if (memBar) memBar.style.width = `${memVal}%`;
+
+    const dbEl = document.getElementById("sys-db-val");
+    const dbBar = document.getElementById("sys-db-bar");
+    if (dbEl) dbEl.textContent = `${dbVal} / ${dbMax} Active`;
+    if (dbBar) dbBar.style.width = `${(dbVal / dbMax) * 100}%`;
+
+  } catch (err) {
+    // Fallback if local backend stub
+    const cpuVal = (20 + Math.random() * 10).toFixed(1);
+    const memVal = (40 + Math.random() * 5).toFixed(1);
+
+    const cpuEl = document.getElementById("sys-cpu-val");
+    const cpuBar = document.getElementById("sys-cpu-bar");
+    if (cpuEl) cpuEl.textContent = `${cpuVal}%`;
+    if (cpuBar) cpuBar.style.width = `${cpuVal}%`;
+
+    const memEl = document.getElementById("sys-mem-val");
+    const memBar = document.getElementById("sys-mem-bar");
+    if (memEl) memEl.textContent = `${memVal}%`;
+    if (memBar) memBar.style.width = `${memVal}%`;
+  }
+}
+
+/**
+ * 6. Recent Activity Feed
+ */
+const initialActivityEvents = [
+  { type: "esim", icon: "bi-card-checklist text-warning", badge: "e-SIM", title: "e-SIM Provisioned", desc: "e-SIM #ESIM-94821 activated for +1 555-0192 on vCell-01", time: "Just now" },
+  { type: "payment", icon: "bi-currency-dollar text-success", badge: "HOPE PAY", title: "Payment Received", desc: "HOPE PAY received $49.99 for Unlimited 5G Plan", time: "2m ago" },
+  { type: "kyc", icon: "bi-person-check-fill text-info", badge: "KYC", title: "KYC Verified", desc: "Biometric KYC verified for User #USR-8821", time: "5m ago" },
+  { type: "otp", icon: "bi-shield-lock-fill text-primary", badge: "2FA OTP", title: "OTP Authenticated", desc: "OTP #839201 verified for portal login", time: "8m ago" }
+];
+
+function initActivityLog() {
+  const container = document.getElementById("activityFeedList");
+  if (!container) return;
+
+  container.innerHTML = initialActivityEvents.map(evt => createActivityItemHtml(evt)).join("");
+}
+
+function createActivityItemHtml(evt) {
+  return `
+    <div class="activity-item p-3 border-bottom border-secondary-subtle d-flex align-items-center justify-content-between">
+      <div class="d-flex align-items-center gap-3">
+        <div class="avatar-sm p-2 rounded bg-dark-input border border-secondary-subtle fs-5 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+          <i class="bi ${evt.icon}"></i>
+        </div>
+        <div>
+          <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold text-light fs-7">${evt.title}</span>
+            <span class="badge bg-dark border border-secondary-subtle text-secondary fs-9">${evt.badge}</span>
+          </div>
+          <div class="text-secondary fs-8">${evt.desc}</div>
+        </div>
+      </div>
+      <div class="text-end">
+        <small class="text-secondary fs-9">${evt.time}</small>
+      </div>
+    </div>
+  `;
+}
+
+function simulateLiveActivityEvent() {
+  const templates = [
+    { type: "esim", icon: "bi-card-checklist text-warning", badge: "e-SIM", title: "e-SIM Provisioned", desc: `e-SIM #ESIM-${Math.floor(10000 + Math.random() * 89999)} provisioned on vCell-02` },
+    { type: "payment", icon: "bi-currency-dollar text-success", badge: "HOPE PAY", title: "Payment Received", desc: `HOPE PAY received $${(29.99 + Math.random() * 50).toFixed(2)}` },
+    { type: "kyc", icon: "bi-person-check-fill text-info", badge: "KYC", title: "KYC Verification", desc: `KYC document approved for User #USR-${Math.floor(1000 + Math.random() * 8999)}` },
+    { type: "otp", icon: "bi-shield-lock-fill text-primary", badge: "2FA OTP", title: "OTP Verified", desc: `OTP authentication successful from IP 192.168.1.${Math.floor(Math.random() * 200)}` }
+  ];
+
+  const evt = templates[Math.floor(Math.random() * templates.length)];
+  evt.time = "Just now";
+
+  const container = document.getElementById("activityFeedList");
+  if (container) {
+    container.insertAdjacentHTML("afterbegin", createActivityItemHtml(evt));
+    if (container.children.length > 10) {
+      container.removeChild(container.lastElementChild);
+    }
+  }
+
+  // Increment revenue if payment event
+  if (evt.type === "payment") {
+    DashboardState.revenue += 49.99;
+    const revEl = document.getElementById("metric-revenue");
+    if (revEl) revEl.textContent = DashboardState.revenue.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Increment e-SIM if esim event
+  if (evt.type === "esim") {
+    DashboardState.esimsCount++;
+    const esimEl = document.getElementById("metric-esims");
+    if (esimEl) esimEl.textContent = DashboardState.esimsCount.toLocaleString();
+  }
+}
+
+/**
+ * Quick Action Helpers
+ */
+function handleProvisionEsim(e) {
+  e.preventDefault();
+  const customer = document.getElementById("esimCustomer")?.value;
+  const plan = document.getElementById("esimPlan")?.value;
+  const cell = document.getElementById("esimCell")?.value;
+
+  // Dismiss modal
+  const modalEl = document.getElementById("provisionEsimModal");
+  if (modalEl) {
+    const modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+  }
+
+  // Increment metric
+  DashboardState.esimsCount++;
+  const esimEl = document.getElementById("metric-esims");
+  if (esimEl) esimEl.textContent = DashboardState.esimsCount.toLocaleString();
+
+  // Add activity log
+  const evt = {
+    type: "esim",
+    icon: "bi-card-checklist text-warning",
+    badge: "e-SIM",
+    title: "e-SIM Provisioned",
+    desc: `New e-SIM (${plan}) provisioned for ${customer} on ${cell}`,
+    time: "Just now"
+  };
+  const container = document.getElementById("activityFeedList");
+  if (container) container.insertAdjacentHTML("afterbegin", createActivityItemHtml(evt));
+
+  if (window.TU5G_Notifications) {
+    window.TU5G_Notifications.success(`e-SIM provisioned successfully for ${customer}!`);
+  }
+}
+
+function handleAiChatSubmit(e) {
+  e.preventDefault();
+  const input = document.getElementById("aiChatInput");
+  const win = document.getElementById("aiChatWindow");
+  if (!input || !win || !input.value.trim()) return;
+
+  const msg = input.value.trim();
+  input.value = "";
+
+  // Append User message
+  win.insertAdjacentHTML("beforeend", `
+    <div class="d-flex mb-3 justify-content-end">
+      <div class="p-3 bg-primary text-white rounded fs-7" style="max-width: 80%;">
+        ${msg}
+      </div>
+    </div>
+  `);
+  win.scrollTop = win.scrollHeight;
+
+  // Simulate AI Response
+  setTimeout(() => {
+    const reply = `Analysis complete: "${msg}". All 6 gNodeB cells are running optimal beamforming algorithms. Average signal strength is ${DashboardState.rsrp} dBm with latency at ${DashboardState.rtt}ms. No packet drops detected.`;
+    win.insertAdjacentHTML("beforeend", `
+      <div class="d-flex mb-3">
+        <div class="avatar-sm bg-success text-white rounded-circle p-2 me-2 d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+          <i class="bi bi-robot"></i>
+        </div>
+        <div class="p-3 bg-dark-card rounded border border-secondary-subtle fs-7 text-light" style="max-width: 80%;">
+          ${reply}
+        </div>
+      </div>
+    `);
+    win.scrollTop = win.scrollHeight;
+  }, 600);
+}
+
+function clearNotifBadge() {
+  const badge = document.getElementById("notifBadge");
+  if (badge) badge.style.display = "none";
+}
+
+function fetchMetricsAndUpdate() {
+  fetchSystemMetrics();
+  if (window.TU5G_Notifications) {
+    window.TU5G_Notifications.info("Metrics and system status refreshed.");
+  }
+}
+</script>
+{% endblock %}

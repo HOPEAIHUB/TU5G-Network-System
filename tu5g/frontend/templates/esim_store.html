@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}E-SIM Store — TU5G{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-blue: #0066ff;
+        --accent-gold: #ffb800;
+        --dark-bg: #0a0e27;
+        --surface: #141b3b;
+        --surface-hover: #1e2652;
+        --text-light: #ffffff;
+        --text-muted: #8b94cc;
+        --color-border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Tabs Style */
+    .esim-tabs {
+        border-bottom: 1px solid var(--color-border) !important;
+        margin-bottom: 2.5rem;
+    }
+
+    .esim-tabs .nav-link {
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        color: var(--text-muted);
+        border: none !important;
+        border-bottom: 3px solid transparent !important;
+        padding: 1rem 1.5rem;
+        transition: all 0.25s ease;
+    }
+
+    .esim-tabs .nav-link:hover {
+        color: white;
+        background: rgba(255,255,255,0.02);
+    }
+
+    .esim-tabs .nav-link.active {
+        color: var(--primary-blue) !important;
+        background: transparent !important;
+        border-bottom-color: var(--primary-blue) !important;
+    }
+
+    /* Cards Style */
+    .num-card {
+        background: rgba(20, 27, 59, 0.5);
+        border: 1px solid var(--color-border);
+        border-radius: 14px;
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .num-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(0, 102, 255, 0.3);
+        background: rgba(20, 27, 59, 0.8);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .num-display {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 1.4rem;
+        font-weight: 900;
+        letter-spacing: 0.05em;
+        color: white;
+        text-shadow: 0 0 10px rgba(255,255,255,0.1);
+    }
+
+    .badge-free {
+        background: rgba(46, 196, 182, 0.15);
+        border: 1px solid rgba(46, 196, 182, 0.4);
+        color: #2ec4b6;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+    }
+
+    .badge-premium {
+        background: rgba(255, 184, 0, 0.15);
+        border: 1px solid rgba(255, 184, 0, 0.4);
+        color: var(--accent-gold);
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+    }
+
+    /* Modal custom design */
+    .modal-content-custom {
+        background-color: #0f1430 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 18px !important;
+    }
+
+    /* Plan Selection box styles */
+    .plan-box {
+        border: 2px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        padding: 1.25rem;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        background: rgba(10, 14, 39, 0.6);
+        position: relative;
+    }
+
+    .plan-box:hover {
+        border-color: rgba(0, 102, 255, 0.3);
+        background: rgba(10, 14, 39, 0.9);
+    }
+
+    .plan-box.selected {
+        border-color: var(--primary-blue);
+        background: rgba(0, 102, 255, 0.08);
+    }
+
+    .plan-box.selected::after {
+        content: '\F272';
+        font-family: 'bootstrap-icons';
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        color: var(--primary-blue);
+        font-size: 1.2rem;
+    }
+
+    /* Free premium section banner */
+    .gov-promo-card {
+        background: linear-gradient(135deg, rgba(20, 27, 59, 0.8) 0%, rgba(10, 14, 39, 0.9) 100%);
+        border: 1px solid rgba(255, 184, 0, 0.2);
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .gov-promo-card::before {
+        content: '';
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(255, 184, 0, 0.1) 0%, transparent 70%);
+        top: -50px;
+        right: -50px;
+        border-radius: 50%;
+    }
+
+    /* QR Code visual simulation */
+    .qr-frame {
+        width: 180px;
+        height: 180px;
+        background: white;
+        padding: 10px;
+        border-radius: 12px;
+        margin: 1.5rem auto;
+        box-shadow: 0 0 25px rgba(0, 102, 255, 0.25);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .qr-frame img {
+        width: 100%;
+        height: auto;
+    }
+
+    .search-input-group {
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <!-- Title Header -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-light uppercase tracking-wider mb-2">Cellular E-SIM Store</h2>
+        <p class="text-secondary">Provision virtual network numbers instantly on the global TU5G cellular infrastructure.</p>
+    </div>
+
+    <!-- TABS NAVIGATION -->
+    <ul class="nav nav-tabs esim-tabs justify-content-center" id="esimStoreTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="free-numbers-tab" data-bs-toggle="tab" data-bs-target="#free-panel" type="button" role="tab" aria-controls="free-panel" aria-selected="true">
+                <i class="bi bi-gift me-2"></i>Free Numbers
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="premium-numbers-tab" data-bs-toggle="tab" data-bs-target="#premium-panel" type="button" role="tab" aria-controls="premium-panel" aria-selected="false">
+                <i class="bi bi-gem me-2"></i>Premium Numbers
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="vanity-numbers-tab" data-bs-toggle="tab" data-bs-target="#vanity-panel" type="button" role="tab" aria-controls="vanity-panel" aria-selected="false">
+                <i class="bi bi-stars me-2"></i>Vanity Numbers
+            </button>
+        </li>
+    </ul>
+
+    <!-- PANELS CONTENT -->
+    <div class="tab-content" id="esimStoreContent">
+        
+        <!-- 1. FREE NUMBERS PANEL -->
+        <div class="tab-pane fade show active" id="free-panel" role="tabpanel" aria-labelledby="free-numbers-tab">
+            <div class="row justify-content-center">
+                <div class="col-lg-6 text-center">
+                    <div class="p-5 bg-dark-gradient rounded-4 border border-secondary-subtle">
+                        <i class="bi bi-sim-fill text-primary display-1 mb-4 d-block"></i>
+                        <h4 class="fw-bold text-white mb-2">Claim Random Phone Number</h4>
+                        <span class="badge badge-free px-3 py-2 fs-7 mb-4">3 MONTHS FREE PROTOCOL</span>
+                        
+                        <p class="text-muted fs-7 mb-4">
+                            Instantly claim a random software-defined mobile number allocated from the regional TU5G virtual base stations. Includes 3 months of complimentary telemetry access.
+                        </p>
+
+                        <div class="p-4 bg-dark rounded border border-secondary-subtle mb-4">
+                            <span class="text-secondary fs-8 uppercase d-block mb-1">Assigned Carrier Format</span>
+                            <span class="num-display text-gradient" id="freeNumPlaceholder">+984-XX-XXX-XXX</span>
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-lg w-100 py-3 font-monospace tracking-wider" id="btnAssignFree">
+                            <i class="bi bi-cpu me-1"></i> GENERATE RANDOM NUMBER
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. PREMIUM NUMBERS PANEL -->
+        <div class="tab-pane fade" id="premium-panel" role="tabpanel" aria-labelledby="premium-numbers-tab">
+            
+            <!-- Search & Filter bar -->
+            <div class="search-input-group mb-5">
+                <div class="input-group">
+                    <span class="input-group-text border-secondary-subtle bg-dark-input text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input type="text" class="form-control border-secondary-subtle bg-dark-input text-light" id="premiumSearch" placeholder="Type characters/digits to filter (e.g. +984-777)...">
+                </div>
+            </div>
+
+            <!-- Numbers Grid -->
+            <div class="row g-4" id="premiumGrid">
+                <!-- Dynamically filled by JS. Placeholders shown initially -->
+            </div>
+        </div>
+
+        <!-- 3. VANITY NUMBERS PANEL -->
+        <div class="tab-pane fade" id="vanity-panel" role="tabpanel" aria-labelledby="vanity-numbers-tab">
+            <div class="row justify-content-center">
+                <div class="col-lg-7">
+                    <div class="p-5 bg-dark-gradient rounded-4 border border-secondary-subtle text-center">
+                        <i class="bi bi-stars text-accent-gold display-2 mb-3 d-block"></i>
+                        <h3 class="fw-bold text-white mb-2">Design Custom Vanity Number</h3>
+                        <p class="text-muted fs-7 mb-4">Craft your exact desired number sequence. Custom routing setup requires special cryptographic signing. Standard rate: <strong>$500.00</strong></p>
+                        
+                        <div class="search-input-group mb-4">
+                            <label class="form-label fs-8 text-secondary uppercase d-block mb-2 text-start">Desired Digits (starts with prefix +984-)</label>
+                            <div class="input-group input-group-lg">
+                                <span class="input-group-text bg-dark-input border-secondary-subtle fw-bold text-accent-gold">+984</span>
+                                <input type="text" class="form-control bg-dark-input border-secondary-subtle font-monospace text-light fw-bold" id="vanityInput" placeholder="777-7777" maxlength="9">
+                            </div>
+                            <div class="form-text fs-8 text-muted text-start mt-2">Only numbers and dashes are accepted. E.g. 555-0123</div>
+                        </div>
+
+                        <div id="vanityResult" class="p-4 bg-dark rounded border border-secondary-subtle mb-4 d-none">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="text-start">
+                                    <span class="badge badge-premium mb-1">AVAILABLE</span>
+                                    <h5 class="m-0 font-monospace text-white" id="vanityNumDisplay">+984-555-5555</h5>
+                                </div>
+                                <span class="fs-4 fw-bold text-accent-gold">$500.00</span>
+                            </div>
+                        </div>
+
+                        <button type="button" class="btn btn-warning btn-lg w-100 py-3 font-monospace tracking-wider text-dark fw-bold" id="btnSearchVanity">
+                            <i class="bi bi-shield-check me-1"></i> VERIFY SEQUENCE AVAILABILITY
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- AI GOVERNANCE PROMO CARD -->
+    <div class="row mt-5 pt-4">
+        <div class="col-12">
+            <div class="gov-promo-card p-4 p-md-5 border-secondary-subtle">
+                <div class="row align-items-center g-4">
+                    <div class="col-lg-8">
+                        <h4 class="fw-bold text-white mb-2"><i class="bi bi-bank text-accent-gold me-2"></i>Sovereign Access Support Programs</h4>
+                        <p class="text-muted fs-7 mb-0">
+                            We provide free premium mobile operator lines and priority virtual WiFi provisioning to students, developer communities, verified charities, and religious organizations globally under the TU5G AI Governance Charter.
+                        </p>
+                    </div>
+                    <div class="col-lg-4 text-lg-end">
+                        <a href="/governance" class="btn btn-outline-warning btn-lg px-4">
+                            Apply for Governance Grant <i class="bi bi-arrow-right ms-1"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- PROVISIONING & PLAN SELECTION MODAL -->
+<div class="modal fade" id="provisionModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="provisionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content-custom">
+            
+            <!-- Modal Header -->
+            <div class="modal-header border-bottom border-secondary-subtle p-4">
+                <h5 class="modal-title fw-bold text-white" id="provisionModalLabel"><i class="bi bi-cpu-fill text-primary me-2 animate-pulse"></i>E-SIM Provisioning Wizard</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" id="modalCloseBtn"></button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="modal-body p-4 p-md-5">
+                
+                <!-- STAGE 1: PLAN SELECT -->
+                <div id="modalStagePlan">
+                    <div class="mb-4">
+                        <span class="text-secondary fs-8 uppercase d-block">PROVISIONING CELLULAR TARGET</span>
+                        <h4 class="fw-bold text-white font-monospace" id="modalSelectedNum">+984-000-0000</h4>
+                    </div>
+
+                    <h6 class="fw-bold text-light mb-3">Choose Carrier Telemetry Plan:</h6>
+                    
+                    <div class="row g-3">
+                        
+                        <!-- 1. Free -->
+                        <div class="col-md-6">
+                            <div class="plan-box selected" data-plan="free" data-price="0">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold text-white mb-0">Free Tier</h6>
+                                    <span class="badge bg-secondary fs-8">3 Mo. Trial</span>
+                                </div>
+                                <span class="display-6 fw-bold text-white d-block mb-2">$0.00</span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-hdd-network me-1"></i>5 GB high-speed/mo</span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-wifi me-1"></i>Shared Virtual WiFi route</span>
+                            </div>
+                        </div>
+
+                        <!-- 2. Premium -->
+                        <div class="col-md-6">
+                            <div class="plan-box" data-plan="premium" data-price="9.99">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold text-white mb-0">Premium Tier</h6>
+                                    <span class="badge bg-primary fs-8">Popular</span>
+                                </div>
+                                <span class="display-6 fw-bold text-white d-block mb-2">$9.99<span class="fs-7 text-muted">/mo</span></span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-hdd-network me-1"></i>10 GB high-speed/mo</span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-wifi me-1"></i>Dedicated high-priority routing</span>
+                            </div>
+                        </div>
+
+                        <!-- 3. Ultra -->
+                        <div class="col-md-6">
+                            <div class="plan-box" data-plan="ultra" data-price="29.99">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold text-white mb-0">Ultra Tier</h6>
+                                    <span class="badge bg-info text-dark fs-8">Uncapped</span>
+                                </div>
+                                <span class="display-6 fw-bold text-white d-block mb-2">$29.99<span class="fs-7 text-muted">/mo</span></span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-hdd-network me-1"></i>Unlimited data bandwidth</span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-broadcast me-1"></i>Holographic Node allocation</span>
+                            </div>
+                        </div>
+
+                        <!-- 4. Business -->
+                        <div class="col-md-6">
+                            <div class="plan-box" data-plan="business" data-price="49.99">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="fw-bold text-white mb-0">Business Tier</h6>
+                                    <span class="badge bg-warning text-dark fs-8">Team</span>
+                                </div>
+                                <span class="display-6 fw-bold text-white d-block mb-2">$49.99<span class="fs-7 text-muted">/mo</span></span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-hdd-network me-1"></i>100 GB high-speed/mo</span>
+                                <span class="fs-8 text-secondary d-block"><i class="bi bi-shield-check me-1"></i>Dedicated enterprise support router</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <button type="button" class="btn btn-primary-gradient btn-lg w-100 py-3 mt-4" id="btnProvisionSubmit">
+                        <i class="bi bi-cloud-plus me-1"></i> PROCEED TO ACTIVATION
+                    </button>
+                </div>
+
+                <!-- STAGE 2: PROVISIONING LOAD SIMULATION -->
+                <div id="modalStageLoading" class="d-none text-center py-4">
+                    <div class="spinner-border text-primary mb-4" style="width: 4rem; height: 4rem;" role="status"></div>
+                    <h4 class="fw-bold text-white mb-2">Injecting eSIM Carrier Node</h4>
+                    <p class="text-muted fs-7 mb-4">Please hold... synchronizing cellular credentials with base stations</p>
+                    
+                    <div class="bg-dark p-3 rounded text-start border border-secondary-subtle max-width-600 mx-auto" style="max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 0.75rem; color: #8b94cc;">
+                        <div id="provLog">
+                            <div>[SYSTEM] Initializing cryptosign channel...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STAGE 3: PROVISION SUCCESS & QR CODE -->
+                <div id="modalStageSuccess" class="d-none text-center">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle border border-success rounded-circle p-3 mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-check-circle-fill text-success fs-2"></i>
+                    </div>
+                    
+                    <h3 class="fw-bold text-white mb-1">E-SIM Provisioned!</h3>
+                    <p class="text-secondary fs-7 mb-4">Your next-generation digital GSM profile is active.</p>
+
+                    <!-- Sim QR Code -->
+                    <div class="qr-frame">
+                        <!-- Standard mock QR Code for eSIM scan -->
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=160x180&data=LPA:1$tu5g.online$PROVISION_KEY_E2E_TELEMETRY" alt="E-SIM QR Code">
+                    </div>
+
+                    <div class="bg-dark p-3 rounded text-start border border-secondary-subtle max-width-500 mx-auto mb-4">
+                        <h6 class="fs-8 text-secondary uppercase fw-bold mb-2">Activation Guidelines:</h6>
+                        <ul class="fs-8 text-muted mb-0 ps-3">
+                            <li class="mb-1">Connect your cellular handset to an active Wi-Fi connection.</li>
+                            <li class="mb-1">Navigate to cellular settings, choose 'Add E-SIM' or 'Add Cellular Plan'.</li>
+                            <li class="mb-1">Scan the quantum-encrypted QR code above.</li>
+                        </ul>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-light px-5 py-2.5" data-bs-dismiss="modal">
+                        Close & View Dashboard
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Mock Premium numbers database
+        const premiumNumbers = [
+            { id: 101, num: "+984-777-7777", badge: "GOLD MATCH", price: 100 },
+            { id: 102, num: "+984-888-8888", badge: "PLATINUM MATCH", price: 100 },
+            { id: 103, num: "+984-999-9999", badge: "SUPER STAR", price: 100 },
+            { id: 104, num: "+984-555-1212", badge: "DIRECTORY STAR", price: 100 },
+            { id: 105, num: "+984-111-2222", badge: "GOLD SEQUENCE", price: 100 },
+            { id: 106, num: "+984-123-4567", badge: "EASY ORDER", price: 100 },
+            { id: 107, num: "+984-700-0007", badge: "SYMMETRIC MATCH", price: 100 },
+            { id: 108, num: "+984-222-3333", badge: "REPEATED PAIR", price: 100 }
+        ];
+
+        let selectedNumber = "";
+        let selectedPrice = 0;
+        let selectedPlan = "free";
+        let selectedPlanPrice = 0;
+
+        const premiumGrid = document.getElementById("premiumGrid");
+        const premiumSearch = document.getElementById("premiumSearch");
+
+        const modalEl = document.getElementById("provisionModal");
+        const provisionModal = new bootstrap.Modal(modalEl);
+
+        // Render Premium grid
+        function renderPremium(data) {
+            premiumGrid.innerHTML = "";
+            if (data.length === 0) {
+                premiumGrid.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="bi bi-emoji-frown text-secondary display-3 mb-2 d-block"></i>
+                        <h5 class="text-white">No matching numbers found</h5>
+                        <p class="text-secondary fs-8">Try adjusting your search criteria</p>
+                    </div>
+                `;
+                return;
+            }
+
+            data.forEach(item => {
+                const card = `
+                    <div class="col-12 col-md-6 col-lg-3">
+                        <div class="card num-card text-center p-4">
+                            <span class="badge badge-premium px-2 py-1 fs-9 align-self-center mb-3">${item.badge}</span>
+                            <div class="num-display mb-3">${item.num}</div>
+                            <div class="text-accent-gold fw-bold mb-3 fs-5">$${item.price.toFixed(2)}</div>
+                            <button type="button" class="btn btn-outline-primary btn-sm w-100 select-num-btn" data-number="${item.num}" data-price="${item.price}">
+                                Select Number
+                            </button>
+                        </div>
+                    </div>
+                `;
+                premiumGrid.insertAdjacentHTML("beforeend", card);
+            });
+
+            // Bind click triggers
+            document.querySelectorAll(".select-num-btn").forEach(btn => {
+                btn.addEventListener("click", function () {
+                    openProvisionWizard(this.dataset.number, parseFloat(this.dataset.price));
+                });
+            });
+        }
+
+        renderPremium(premiumNumbers);
+
+        // Search trigger
+        premiumSearch.addEventListener("input", function () {
+            const val = this.value.toLowerCase().trim().replace(/[^0-9+]/g, "");
+            const filtered = premiumNumbers.filter(item => {
+                const normalized = item.num.replace(/[^0-9+]/g, "");
+                return normalized.includes(val);
+            });
+            renderPremium(filtered);
+        });
+
+        // 1. Assign random free number
+        document.getElementById("btnAssignFree").addEventListener("click", function() {
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> GENERATING...';
+
+            setTimeout(() => {
+                const randomPart1 = Math.floor(100 + Math.random() * 900);
+                const randomPart2 = Math.floor(1000 + Math.random() * 9000);
+                const assignedNum = `+984-${randomPart1}-${randomPart2}`;
+                
+                document.getElementById("freeNumPlaceholder").textContent = assignedNum;
+                btn.className = "btn btn-success btn-lg w-100 py-3 font-monospace";
+                btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> CLAIMED - SELECT PLAN BELOW';
+                
+                setTimeout(() => {
+                    openProvisionWizard(assignedNum, 0);
+                    // Reset button state
+                    btn.disabled = false;
+                    btn.className = "btn btn-primary btn-lg w-100 py-3 font-monospace tracking-wider";
+                    btn.innerHTML = '<i class="bi bi-cpu me-1"></i> GENERATE RANDOM NUMBER';
+                }, 1000);
+            }, 1200);
+        });
+
+        // 3. Vanity Search Sequence
+        document.getElementById("btnSearchVanity").addEventListener("click", function () {
+            const input = document.getElementById("vanityInput").value.trim().replace(/[^0-9-]/g, "");
+            
+            if (input.length < 4) {
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.warning("Please type a vanity sequence of at least 4 digits.");
+                } else { alert("Type at least 4 digits."); }
+                return;
+            }
+
+            const btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> CHECKING AVAILABILITY...';
+
+            setTimeout(() => {
+                const num = `+984-${input}`;
+                document.getElementById("vanityNumDisplay").textContent = num;
+                document.getElementById("vanityResult").classList.remove("d-none");
+                
+                btn.className = "btn btn-success btn-lg w-100 py-3 font-monospace";
+                btn.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> PROCEED TO PROVISION';
+                
+                btn.onclick = function() {
+                    openProvisionWizard(num, 500);
+                    // Reset
+                    btn.className = "btn btn-warning btn-lg w-100 py-3 font-monospace tracking-wider text-dark fw-bold";
+                    btn.innerHTML = '<i class="bi bi-shield-check me-1"></i> VERIFY SEQUENCE AVAILABILITY';
+                    document.getElementById("vanityResult").classList.add("d-none");
+                    this.onclick = null;
+                };
+
+                btn.disabled = false;
+            }, 1500);
+        });
+
+        // Open Provision wizard modal
+        function openProvisionWizard(number, numberPrice) {
+            selectedNumber = number;
+            selectedPrice = numberPrice;
+            
+            document.getElementById("modalSelectedNum").textContent = selectedNumber;
+            
+            // Reset stages
+            document.getElementById("modalStagePlan").classList.remove("d-none");
+            document.getElementById("modalStageLoading").classList.add("d-none");
+            document.getElementById("modalStageSuccess").classList.add("d-none");
+            document.getElementById("modalCloseBtn").classList.remove("d-none");
+
+            // Open Modal
+            provisionModal.show();
+        }
+
+        // Plan box selection clicks
+        document.querySelectorAll(".plan-box").forEach(box => {
+            box.addEventListener("click", function() {
+                document.querySelectorAll(".plan-box").forEach(b => b.classList.remove("selected"));
+                this.classList.add("selected");
+                selectedPlan = this.dataset.plan;
+                selectedPlanPrice = parseFloat(this.dataset.price);
+            });
+        });
+
+        // Submit provisioning
+        document.getElementById("btnProvisionSubmit").addEventListener("click", function() {
+            const totalPrice = selectedPrice + selectedPlanPrice;
+            
+            // Checkout route check
+            if (totalPrice > 0) {
+                // Paid checkout -> redirect to payments with search parameters
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.info("Paid order. Redirecting to HOPE PAY processing gateway...");
+                }
+                setTimeout(() => {
+                    window.location.href = `/payments?amount=${totalPrice}&number=${encodeURIComponent(selectedNumber)}&plan=${selectedPlan}`;
+                }, 1500);
+            } else {
+                // Free direct provisioning simulation
+                runFreeProvisioningSimulation();
+            }
+        });
+
+        function runFreeProvisioningSimulation() {
+            document.getElementById("modalStagePlan").classList.add("d-none");
+            document.getElementById("modalStageLoading").classList.remove("d-none");
+            document.getElementById("modalCloseBtn").classList.add("d-none"); // Prevent closing mid-stream
+
+            const logs = [
+                "[SYSTEM] Generating cryptographic carrier keys...",
+                "[CARRIER] Contacting local virtual GSM Base station node...",
+                "[SECURITY] Signing eSIM profile with RSA-4096 cellular gateway token...",
+                "[ROUTER] Allocating carrier space on route TU5G-LK-FREE...",
+                "[SYSTEM] Packaging QR payload credentials...",
+                "[SYSTEM] Node provision complete! Ready for handshake."
+            ];
+
+            const logContainer = document.getElementById("provLog");
+            logContainer.innerHTML = "";
+            let logIdx = 0;
+
+            function addLogLine() {
+                if (logIdx < logs.length) {
+                    const line = document.createElement("div");
+                    line.textContent = logs[logIdx];
+                    logContainer.appendChild(line);
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                    logIdx++;
+                    setTimeout(addLogLine, 1000);
+                } else {
+                    // Simulation finished
+                    setTimeout(() => {
+                        document.getElementById("modalStageLoading").classList.add("d-none");
+                        document.getElementById("modalStageSuccess").classList.remove("d-none");
+                        document.getElementById("modalCloseBtn").classList.remove("d-none");
+                        
+                        if (window.TU5G_Notifications) {
+                            TU5G_Notifications.success("E-SIM cellular route active!");
+                        }
+                    }, 500);
+                }
+            }
+
+            addLogLine();
+        }
+    });
+</script>
+{% endblock %}

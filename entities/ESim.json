@@ -1,0 +1,58 @@
+{
+  "properties": {
+    "countryCode": {
+      "type": "string"
+    },
+    "dataAllowanceGb": {
+      "type": "number"
+    },
+    "dataUsedGb": {
+      "default": 0,
+      "type": "number"
+    },
+    "iccid": {
+      "type": "string"
+    },
+    "numberCategory": {
+      "enum": [
+        "free",
+        "premium",
+        "vanity"
+      ],
+      "type": "string"
+    },
+    "phoneNumber": {
+      "type": "string"
+    },
+    "planExpires": {
+      "type": "string"
+    },
+    "planType": {
+      "enum": [
+        "free_3months",
+        "premium",
+        "ultra",
+        "business"
+      ],
+      "type": "string"
+    },
+    "qrCodeData": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "active",
+        "inactive",
+        "suspended",
+        "reserved"
+      ],
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "ESim"
+}

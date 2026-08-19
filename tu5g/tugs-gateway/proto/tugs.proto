@@ -1,0 +1,72 @@
+syntax = "proto3";
+
+package tugs;
+
+service Tugs {
+  // HAG — AI GSM service
+  rpc SendOtp(SendOtpRequest) returns (SendOtpResponse);
+  rpc VerifyOtp(VerifyOtpRequest) returns (VerifyOtpResponse);
+  
+  // QSAC — Quantum crypto & storage
+  rpc StoreDocument(StoreRequest) returns (StoreResponse);
+  rpc Encrypt(EncryptRequest) returns (EncryptResponse);
+  rpc Decrypt(DecryptRequest) returns (DecryptResponse);
+  
+  // HMAIL — Secure mail
+  rpc SendReceipt(SendReceiptRequest) returns (SendReceiptResponse);
+}
+
+message SendOtpRequest {
+  string phone = 1;
+}
+
+message SendOtpResponse {
+  string id = 1;
+  bool success = 2;
+  string message = 3;
+}
+
+message VerifyOtpRequest {
+  string phone = 1;
+  string otp = 2;
+}
+
+message VerifyOtpResponse {
+  bool valid = 1;
+}
+
+message StoreRequest {
+  string filename = 1;
+  bytes content = 2;
+}
+
+message StoreResponse {
+  string storageUrl = 1;
+}
+
+message EncryptRequest {
+  bytes plaintext = 1;
+}
+
+message EncryptResponse {
+  bytes ciphertext = 1;
+}
+
+message DecryptRequest {
+  bytes ciphertext = 1;
+}
+
+message DecryptResponse {
+  bytes plaintext = 1;
+}
+
+message SendReceiptRequest {
+  string to = 1;
+  string subject = 2;
+  string body = 3;
+}
+
+message SendReceiptResponse {
+  bool success = 1;
+  string messageId = 2;
+}

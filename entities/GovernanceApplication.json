@@ -1,0 +1,43 @@
+{
+  "properties": {
+    "adminNotes": {
+      "type": "string"
+    },
+    "category": {
+      "enum": [
+        "ai_governance",
+        "community_developer",
+        "student",
+        "charity",
+        "religious_org"
+      ],
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "organizationName": {
+      "type": "string"
+    },
+    "proofUrl": {
+      "type": "string"
+    },
+    "reviewedAt": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "GovernanceApplication"
+}

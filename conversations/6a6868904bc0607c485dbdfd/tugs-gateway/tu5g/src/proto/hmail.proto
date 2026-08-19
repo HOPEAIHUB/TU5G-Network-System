@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package hmail;
+
+service HmailService {
+  rpc SendConfirmationEmail (SendEmailRequest) returns (SendEmailResponse);
+  rpc SendReceipt (SendReceiptRequest) returns (SendReceiptResponse);
+}
+
+message SendEmailRequest {
+  string to = 1;
+  string subject = 2;
+  string body = 3;
+}
+
+message SendEmailResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message SendReceiptRequest {
+  string email = 1;
+  string receipt_id = 2;
+  bytes document = 3;
+  string filename = 4;
+}
+
+message SendReceiptResponse {
+  bool success = 1;
+  string message = 2;
+}

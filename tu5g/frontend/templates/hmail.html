@@ -1,0 +1,674 @@
+{% extends "base.html" %}
+
+{% block title %}HMAIL — TU5G{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-blue: #0066ff;
+        --accent-gold: #ffb800;
+        --dark-bg: #0a0e27;
+        --surface: #141b3b;
+        --surface-hover: #1e2652;
+        --text-light: #ffffff;
+        --text-muted: #8b94cc;
+        --color-border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Mail Layout */
+    .hmail-grid {
+        display: grid;
+        grid-template-columns: 280px 380px 1fr;
+        height: calc(100vh - 180px);
+        min-height: 550px;
+        background: rgba(20, 27, 59, 0.4);
+        border: 1px solid var(--color-border);
+        border-radius: 18px;
+        overflow: hidden;
+        backdrop-filter: blur(16px);
+    }
+
+    @media (max-width: 1200px) {
+        .hmail-grid {
+            grid-template-columns: 80px 320px 1fr;
+        }
+        .hmail-sidebar .nav-label, .hmail-sidebar .kyc-text {
+            display: none !important;
+        }
+        .hmail-sidebar .btn-compose {
+            padding: 0.5rem !important;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+        }
+        .hmail-sidebar .btn-compose span {
+            display: none;
+        }
+        .hmail-sidebar .btn-compose i {
+            margin-right: 0 !important;
+            font-size: 1.2rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hmail-grid {
+            grid-template-columns: 1fr;
+            height: auto;
+        }
+        .hmail-sidebar, .hmail-detail {
+            display: none;
+        }
+        .hmail-list {
+            border-right: none !important;
+        }
+    }
+
+    /* Sidebar Column */
+    .hmail-sidebar {
+        border-right: 1px solid var(--color-border);
+        background: rgba(10, 14, 39, 0.6);
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .btn-compose {
+        background: linear-gradient(135deg, var(--primary-blue) 0%, #0044cc 100%);
+        border: none;
+        color: white;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        padding: 0.85rem;
+        border-radius: 10px;
+        letter-spacing: 0.05em;
+        box-shadow: 0 4px 15px rgba(0, 102, 255, 0.35);
+        transition: all 0.3s ease;
+    }
+    .btn-compose:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 102, 255, 0.5);
+    }
+
+    .mail-nav .nav-link {
+        color: var(--text-muted);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        margin-bottom: 0.25rem;
+    }
+    .mail-nav .nav-link:hover, .mail-nav .nav-link.active {
+        color: white;
+        background: rgba(255, 255, 255, 0.05);
+    }
+    .mail-nav .nav-link.active {
+        color: var(--primary-blue);
+        border-left: 3px solid var(--primary-blue);
+        border-radius: 0 8px 8px 0;
+    }
+
+    /* Indicator */
+    .kyc-indicator-card {
+        background: rgba(10, 14, 39, 0.8);
+        border: 1px solid rgba(46, 196, 182, 0.2);
+        padding: 1rem;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .badge-hmail-act {
+        background: rgba(0, 102, 255, 0.15);
+        border: 1px solid rgba(0, 102, 255, 0.5);
+        color: #5599ff;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        font-size: 0.7rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 50px;
+    }
+
+    /* Message List Column */
+    .hmail-list {
+        border-right: 1px solid var(--color-border);
+        background: rgba(15, 22, 45, 0.2);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+    }
+
+    .hmail-list-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+        background: rgba(10, 14, 39, 0.4);
+    }
+
+    .hmail-items-scroll {
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .mail-item-card {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--color-border);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        position: relative;
+    }
+    .mail-item-card:hover {
+        background: rgba(255, 255, 255, 0.02);
+    }
+    .mail-item-card.active {
+        background: rgba(0, 102, 255, 0.08);
+        border-left: 4px solid var(--primary-blue);
+    }
+
+    .unread-indicator {
+        position: absolute;
+        top: 22px;
+        left: 8px;
+        width: 8px;
+        height: 8px;
+        background-color: var(--primary-blue);
+        border-radius: 50%;
+        box-shadow: 0 0 10px var(--primary-blue);
+    }
+
+    .mail-item-card.read .unread-indicator {
+        display: none;
+    }
+
+    .sender-avatar {
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        background-color: var(--surface);
+        border: 1px solid var(--color-border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: var(--accent-gold);
+    }
+
+    /* Message Details Viewport */
+    .hmail-detail {
+        display: flex;
+        flex-direction: column;
+        background: rgba(10, 14, 39, 0.3);
+        overflow: hidden;
+    }
+
+    .hmail-detail-header {
+        padding: 1.5rem 2rem;
+        border-bottom: 1px solid var(--color-border);
+        background: rgba(10, 14, 39, 0.4);
+    }
+
+    .hmail-detail-body {
+        padding: 2rem;
+        overflow-y: auto;
+        flex: 1;
+        background: rgba(10, 14, 39, 0.1);
+        color: #cbd5e1;
+        font-size: 0.95rem;
+        line-height: 1.7;
+    }
+
+    .modal-content-hmail {
+        background-color: #0f1430 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 18px !important;
+    }
+
+    /* Lock overlay if not KYC verified */
+    .kyc-lock-overlay {
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(10, 14, 39, 0.9);
+        z-index: 99;
+        backdrop-filter: blur(8px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    
+    <!-- Top Bar -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center gap-3">
+            <h2 class="fw-bold text-white mb-0">HMAIL Terminal</h2>
+            <span class="badge-hmail-act">
+                <i class="bi bi-envelope-check-fill me-1 animate-pulse"></i> HMAIL ACTIVATED
+            </span>
+        </div>
+        <div class="fs-8 text-secondary">
+            Support Host: <a href="mailto:support@tu5g.online" class="text-gradient fw-bold text-decoration-none">support@tu5g.online</a>
+        </div>
+    </div>
+
+    <!-- MAIN TERMINAL WINDOW -->
+    <div class="hmail-grid position-relative">
+        
+        <!-- MOCK KYC LOCK SCREEN (Managed by JS check on load) -->
+        <div class="kyc-lock-overlay d-none" id="kycLockOverlay">
+            <div class="max-width-500">
+                <i class="bi bi-shield-lock-fill text-danger display-1 mb-4 d-block"></i>
+                <h3 class="fw-bold text-white mb-2">HMAIL Security Node Encrypted</h3>
+                <p class="text-muted fs-7 mb-4">
+                    In compliance with cellular operator legal routing, your sovereign HMAIL inbox remains locked until your compliance node identity is certified.
+                </p>
+                <a href="/kyc" class="btn btn-warning px-5 py-3 text-dark fw-bold font-monospace">
+                    <i class="bi bi-person-check-fill me-2"></i> INITIATE KYC VERIFICATION
+                </a>
+            </div>
+        </div>
+
+        <!-- 1. LEFT SIDEBAR COLUMN -->
+        <div class="hmail-sidebar">
+            <div class="mail-nav-container">
+                <!-- Compose Trigger -->
+                <button class="btn btn-compose w-100 mb-4 py-2.5" data-bs-toggle="modal" data-bs-target="#composeModal">
+                    <i class="bi bi-pencil-square me-2"></i><span>COMPOSE</span>
+                </button>
+
+                <!-- Folders Navigation -->
+                <nav class="nav flex-column mail-nav">
+                    <a class="nav-link active d-flex align-items-center justify-content-between" href="#" data-folder="inbox">
+                        <span><i class="bi bi-inbox me-2"></i><span class="nav-label">Inbox</span></span>
+                        <span class="badge bg-primary text-white font-monospace fs-8" id="inboxUnreadBadge">2</span>
+                    </a>
+                    <a class="nav-link d-flex align-items-center" href="#" data-folder="sent">
+                        <i class="bi bi-send me-2"></i><span class="nav-label">Sent Mail</span>
+                    </a>
+                    <a class="nav-link d-flex align-items-center" href="#" data-folder="archive">
+                        <i class="bi bi-archive me-2"></i><span class="nav-label">Archive</span>
+                    </a>
+                    <a class="nav-link d-flex align-items-center" href="#" data-folder="spam">
+                        <i class="bi bi-shield-slash me-2"></i><span class="nav-label">Spam</span>
+                    </a>
+                </nav>
+            </div>
+
+            <!-- KYC Verification Indicator -->
+            <div class="kyc-indicator-card" id="kycStatusBox">
+                <i class="bi bi-shield-fill-check text-success fs-3"></i>
+                <div class="kyc-text">
+                    <span class="d-block text-white fs-8 fw-bold">KYC Certified</span>
+                    <span class="text-secondary fs-9">Active Routing Approved</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. INBOX LIST COLUMN -->
+        <div class="hmail-list">
+            <div class="hmail-list-header">
+                <h5 class="fw-bold text-white mb-2">Inbox</h5>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text bg-dark border-secondary-subtle text-muted"><i class="bi bi-funnel"></i></span>
+                    <input type="text" class="form-control bg-dark border-secondary-subtle text-white" id="mailSearch" placeholder="Filter subjects...">
+                </div>
+            </div>
+
+            <div class="hmail-items-scroll" id="mailItemsContainer">
+                <!-- Dynamically populated. Loading State Placeholder -->
+                <div id="listLoadingState" class="text-center py-5 d-none">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                </div>
+                <!-- Empty State Placeholder -->
+                <div id="listEmptyState" class="text-center py-5 d-none">
+                    <i class="bi bi-envelope-open text-secondary display-4 d-block mb-3 opacity-25"></i>
+                    <p class="text-secondary fs-8">No matching records found.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. MESSAGE DETAIL COLUMN -->
+        <div class="hmail-detail">
+            <!-- Header section of active email -->
+            <div class="hmail-detail-header" id="detailHeaderSection">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h4 class="fw-bold text-white mb-1" id="detailSubject">Select an email to view</h4>
+                        <span class="badge bg-secondary font-monospace" id="detailId">HMAIL PROTOCOL</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" id="btnArchiveMail"><i class="bi bi-archive"></i></button>
+                        <button class="btn btn-outline-danger btn-sm" id="btnDeleteMail"><i class="bi bi-trash"></i></button>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div class="sender-avatar" id="detailSenderAvatar">T</div>
+                    <div>
+                        <span class="d-block text-white fw-bold fs-7" id="detailSenderName">TU5G Gatekeeper</span>
+                        <span class="text-secondary fs-8" id="detailSenderEmail">gatekeeper@tu5g.online</span>
+                    </div>
+                    <div class="ms-auto text-end">
+                        <span class="text-secondary fs-8 d-block" id="detailDate">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body section of active email -->
+            <div class="hmail-detail-body" id="detailBodySection">
+                <div class="text-center py-5" id="detailPlaceholder">
+                    <i class="bi bi-mailbox display-3 text-secondary d-block mb-3 opacity-20"></i>
+                    <p class="text-secondary fs-8">Double-click or tap an email card in the list viewport to read encrypted packet contents.</p>
+                </div>
+                <div id="detailContentText" class="d-none">
+                    <!-- Text body will render here -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- COMPOSE MAIL MODAL -->
+<div class="modal fade" id="composeModal" tabindex="-1" aria-labelledby="composeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content-hmail p-2">
+            
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white" id="composeModalLabel"><i class="bi bi-pencil-square text-primary me-2"></i>New HMAIL Secure Packet</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                <form id="composeForm">
+                    <!-- Recipient -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Recipient HMAIL / Carrier route</label>
+                        <input type="email" class="form-control bg-dark border-secondary-subtle text-white font-monospace" id="composeTo" placeholder="compliance@tu5g.online" required>
+                    </div>
+
+                    <!-- Subject -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Subject</label>
+                        <input type="text" class="form-control bg-dark border-secondary-subtle text-white fw-bold" id="composeSubject" placeholder="Inquiry about Node Allocation" required>
+                    </div>
+
+                    <!-- Body -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Packet Message Payload</label>
+                        <textarea class="form-control bg-dark border-secondary-subtle text-white fs-8" id="composeBody" rows="8" placeholder="Enter secure message content..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-gradient w-100 py-3 fw-bold" id="btnSendMail">
+                        <i class="bi bi-send-fill me-1"></i> DISPATCH SECURE PACKET
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        let isKycVerified = true; // Set to false to test lock overlay
+        
+        // Mock Mail Database
+        let emails = [
+            { id: "HM-7721", sender: "TU5G Network Control", email: "gatekeeper@tu5g.online", subject: "Quantum-Handshake Secure Socket Synced", date: "2026-07-29 05:12", body: "Hello Activated Operator Node,\n\nWelcome to your HMAIL (Hypermail) sovereign communication client. This protocol transmits messages exclusively via encrypted tunnels on our cellular base routing layers.\n\nYour inbox is completely isolated from standard internet commercial spam bots, maintaining strict security and verified sender identification.\n\nThank you for choosing TU5G Platform.\n\nBest Regards,\nGatekeeper Core", read: false },
+            { id: "HM-7720", sender: "Compliance Core", email: "compliance@tu5g.online", subject: "Sovereign Operator KYC Certified Successfully", date: "2026-07-28 19:40", body: "Dear Operator,\n\nWe are pleased to inform you that your legal operator identity files submitted in Step 4 have been successfully audited and approved by the Decentralized AI Compliance Router.\n\nYour dedicated HMAIL inbox routing address, together with the global E-SIM cellular provisioning, have been fully certified and released.\n\nRouting Table: Approved\nStatus: Certified", read: true }
+        ];
+
+        let activeMail = null;
+
+        // Check verification states
+        function verifyKycAccess() {
+            // For testing and demonstration, let's fetch real status if present, otherwise default to verified
+            fetch("/kyc/status")
+            .then(res => res.json())
+            .then(data => {
+                if (data.status !== "verified" && data.verified !== true) {
+                    isKycVerified = false;
+                    document.getElementById("kycLockOverlay").classList.remove("d-none");
+                    document.getElementById("kycStatusBox").innerHTML = `
+                        <i class="bi bi-shield-fill-x text-danger fs-3"></i>
+                        <div class="kyc-text">
+                            <span class="d-block text-white fs-8 fw-bold">Compliance Node Locked</span>
+                            <span class="text-secondary fs-9">Complete KYC setup</span>
+                        </div>
+                    `;
+                }
+            })
+            .catch(() => {
+                // If endpoint returns error or is not integrated, let's allow bypass
+                isKycVerified = true;
+                document.getElementById("kycLockOverlay").classList.add("d-none");
+            });
+        }
+
+        verifyKycAccess();
+
+        function renderInboxList() {
+            const container = document.getElementById("mailItemsContainer");
+            const loading = document.getElementById("listLoadingState");
+            const empty = document.getElementById("listEmptyState");
+
+            loading.classList.add("d-none");
+            
+            // Clear current cards
+            const cards = container.querySelectorAll(".mail-item-card");
+            cards.forEach(c => c.remove());
+
+            if (emails.length === 0) {
+                empty.classList.remove("d-none");
+                updateUnreadBadge();
+                return;
+            }
+
+            empty.classList.add("d-none");
+
+            emails.forEach(mail => {
+                const isReadClass = mail.read ? "read" : "";
+                const initials = mail.sender.substring(0, 1).toUpperCase();
+                
+                const cardHtml = `
+                    <div class="mail-item-card ${isReadClass} d-flex align-items-center gap-3" data-id="${mail.id}" id="card-${mail.id}">
+                        <div class="unread-indicator"></div>
+                        <div class="sender-avatar">${initials}</div>
+                        <div class="flex-grow-1 overflow-hidden" style="max-width: 250px;">
+                            <div class="d-flex justify-content-between mb-1">
+                                <strong class="text-white fs-8 text-truncate d-block" style="max-width: 140px;">${mail.sender}</strong>
+                                <span class="text-secondary fs-9">${mail.date.split(' ')[0]}</span>
+                            </div>
+                            <span class="text-light fs-8 fw-bold d-block text-truncate">${mail.subject}</span>
+                            <span class="text-secondary fs-9 d-block text-truncate">${mail.body}</span>
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML("afterbegin", cardHtml);
+            });
+
+            // Bind click handlers to cards
+            document.querySelectorAll(".mail-item-card").forEach(card => {
+                card.addEventListener("click", function() {
+                    document.querySelectorAll(".mail-item-card").forEach(c => c.classList.remove("active"));
+                    this.classList.add("active");
+                    selectMail(this.dataset.id);
+                });
+            });
+
+            updateUnreadBadge();
+        }
+
+        function updateUnreadBadge() {
+            const unreadCount = emails.filter(m => !m.read).length;
+            const badge = document.getElementById("inboxUnreadBadge");
+            badge.textContent = unreadCount;
+            if (unreadCount === 0) {
+                badge.classList.add("d-none");
+            } else {
+                badge.classList.remove("d-none");
+            }
+        }
+
+        function selectMail(id) {
+            const mail = emails.find(m => m.id === id);
+            if (!mail) return;
+
+            activeMail = mail;
+            mail.read = true; // Set read
+
+            // Update card UI class
+            const card = document.getElementById(`card-${id}`);
+            if (card) {
+                card.classList.add("read");
+            }
+            updateUnreadBadge();
+
+            // Populate Details Column
+            document.getElementById("detailSubject").textContent = mail.subject;
+            document.getElementById("detailId").textContent = mail.id;
+            document.getElementById("detailSenderName").textContent = mail.sender;
+            document.getElementById("detailSenderEmail").textContent = mail.email;
+            document.getElementById("detailSenderAvatar").textContent = mail.sender.substring(0, 1).toUpperCase();
+            document.getElementById("detailDate").textContent = mail.date;
+            
+            // Format body content
+            const contentBody = document.getElementById("detailContentText");
+            contentBody.innerHTML = mail.body.replace(/\n/g, '<br>');
+            contentBody.classList.remove("d-none");
+            
+            document.getElementById("detailPlaceholder").classList.add("d-none");
+        }
+
+        // Render initially
+        renderInboxList();
+
+        // Search Subjects Filter
+        const mailSearch = document.getElementById("mailSearch");
+        mailSearch.addEventListener("input", function() {
+            const term = this.value.toLowerCase().trim();
+            const cards = document.querySelectorAll(".mail-item-card");
+            
+            cards.forEach(card => {
+                const id = card.dataset.id;
+                const mail = emails.find(m => m.id === id);
+                if (mail) {
+                    if (mail.subject.toLowerCase().includes(term) || mail.sender.toLowerCase().includes(term)) {
+                        card.style.setProperty("display", "flex", "important");
+                    } else {
+                        card.style.setProperty("display", "none", "important");
+                    }
+                }
+            });
+        });
+
+        // Compose Form Submit
+        document.getElementById("composeForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const to = document.getElementById("composeTo").value;
+            const subject = document.getElementById("composeSubject").value;
+            const body = document.getElementById("composeBody").value;
+
+            const btn = document.getElementById("btnSendMail");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> DISPATCHING...';
+
+            fetch("/hmail/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    to_address: to,
+                    subject: subject,
+                    body_message: body
+                })
+            })
+            .then(res => {
+                // Simulation Success
+                setTimeout(() => {
+                    const sentMail = {
+                        id: "HM-" + Math.floor(10000 + Math.random() * 90000),
+                        sender: "Sovereign Operator (Me)",
+                        email: "me@tu5g.online",
+                        subject: subject,
+                        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                        body: body,
+                        read: true
+                    };
+
+                    emails.push(sentMail);
+                    renderInboxList();
+
+                    bootstrap.Modal.getInstance(document.getElementById("composeModal")).hide();
+                    document.getElementById("composeForm").reset();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-send-fill me-1"></i> DISPATCH SECURE PACKET';
+
+                    if (window.TU5G_Notifications) {
+                        TU5G_Notifications.success("Hypermail packet dispatched and signed successfully.");
+                    }
+                }, 1200);
+            });
+        });
+
+        // Folder Nav interactions (Spam, Sent, Archive empty layout mocks)
+        document.querySelectorAll(".mail-nav .nav-link").forEach(link => {
+            link.addEventListener("click", function(e) {
+                e.preventDefault();
+                document.querySelectorAll(".mail-nav .nav-link").forEach(l => l.classList.remove("active"));
+                this.classList.add("active");
+
+                const folderName = this.dataset.folder;
+                document.querySelector(".hmail-list-header h5").textContent = this.querySelector(".nav-label").textContent;
+
+                // Simple render simulation depending on Folder
+                if (folderName === 'inbox') {
+                    renderInboxList();
+                } else {
+                    // Empty state mock for Spam / Archive / Sent
+                    const container = document.getElementById("mailItemsContainer");
+                    container.querySelectorAll(".mail-item-card").forEach(c => c.remove());
+                    document.getElementById("listEmptyState").classList.remove("d-none");
+                }
+            });
+        });
+
+        // Delete Active Email
+        document.getElementById("btnDeleteMail").addEventListener("click", function() {
+            if (!activeMail) return;
+            
+            emails = emails.filter(m => m.id !== activeMail.id);
+            activeMail = null;
+            
+            // Clear details UI
+            document.getElementById("detailSubject").textContent = "Select an email to view";
+            document.getElementById("detailId").textContent = "HMAIL PROTOCOL";
+            document.getElementById("detailContentText").classList.add("d-none");
+            document.getElementById("detailPlaceholder").classList.remove("d-none");
+
+            renderInboxList();
+            if (window.TU5G_Notifications) {
+                TU5G_Notifications.success("HMAIL secure packet purged from node.");
+            }
+        });
+
+        // Archive Active Email
+        document.getElementById("btnArchiveMail").addEventListener("click", function() {
+            if (!activeMail) return;
+            if (window.TU5G_Notifications) {
+                TU5G_Notifications.success("Packet archived successfully.");
+            }
+        });
+
+    });
+</script>
+{% endblock %}

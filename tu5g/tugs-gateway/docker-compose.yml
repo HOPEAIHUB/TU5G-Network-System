@@ -1,0 +1,71 @@
+version: "3.9"
+
+services:
+  tu5g:
+    build: ./tu5g
+    container_name: tu5g
+    environment:
+      - TU5G_PORT=8080
+      - HAG_GRPC_ADDR=hag:50051
+      - HMAIL_GRPC_ADDR=hmail:50051
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+      - GRPC_ROOT_CA=${GRPC_ROOT_CA}
+      - GRPC_CLIENT_KEY=${GRPC_CLIENT_KEY}
+      - GRPC_CLIENT_CERT=${GRPC_CLIENT_CERT}
+    ports:
+      - "8080:8080"
+    depends_on:
+      - hag
+      - hmail
+      - qsac
+      - vault
+
+  hag:
+    build: ./hag
+    container_name: hag
+    environment:
+      - HAG_PORT=8090
+      - VAULT_ENDPOINT=http://vault:8080
+      - CLOUD_FLARE_API=${CLOUD_FLARE_API}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+      - JWT_PUBLIC_KEY=${JWT_PUBLIC_KEY}
+    ports:
+      - "8090:8090"
+    depends_on:
+      - vault
+
+  hmail:
+    build: ./hmail
+    container_name: hmail
+    environment:
+      - HMAIL_PORT=8100
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - DKIM_PRIVATE_KEY=${DKIM_PRIVATE_KEY}
+      - DKIM_SELECTOR=${DKIM_SELECTOR}
+      - DKIM_DOMAIN=${DKIM_DOMAIN}
+    ports:
+      - "8100:8100"
+    depends_on:
+      - vault
+
+  qsac:
+    build: ./qsac
+    container_name: qsac
+    environment:
+      - QSAC_BUCKET=qsac-infinity
+      - POST_QUANTUM_KEM=KYBER1024
+    ports:
+      - "8200:8200"
+
+  vault:
+    build: ./vault
+    container_name: vault
+    environment:
+      - SHARES=5
+      - THRESHOLD=3
+    ports:
+      - "8080:8080"

@@ -1,0 +1,22 @@
+{
+  "properties": {
+    "accountId": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "username": {
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "HmailAccount"
+}

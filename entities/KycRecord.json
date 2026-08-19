@@ -1,0 +1,47 @@
+{
+  "properties": {
+    "address": {
+      "type": "string"
+    },
+    "adminNotes": {
+      "type": "string"
+    },
+    "documentUrls": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "fullName": {
+      "type": "string"
+    },
+    "idNumber": {
+      "type": "string"
+    },
+    "idType": {
+      "enum": [
+        "passport",
+        "national_id",
+        "drivers_license"
+      ],
+      "type": "string"
+    },
+    "reviewedAt": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "verified",
+        "rejected"
+      ],
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "KycRecord"
+}

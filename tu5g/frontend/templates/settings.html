@@ -1,0 +1,808 @@
+{% extends "base.html" %} {% block title %}Settings - TU5G Network Control
+Center{% endblock %} {% block extra_head %}
+<style>
+  /* Settings layout tweaks */
+  .settings-nav .nav-link {
+    color: var(--color-text-secondary);
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+  }
+  .settings-nav .nav-link:hover {
+    color: var(--color-text-light);
+    background-color: var(--color-bg-input);
+  }
+  .settings-nav .nav-link.active {
+    color: var(--color-primary) !important;
+    background-color: var(--color-bg-card) !important;
+    border-color: var(--color-border) !important;
+    font-weight: 600;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid px-4">
+  <!-- Page Header -->
+  <div class="mb-4">
+    <h1 class="h3 fw-bold text-light mb-1">System Settings</h1>
+    <p class="text-secondary m-0">
+      Configure your profile, security keys, AI automation bots, and network
+      cell standards.
+    </p>
+  </div>
+
+  <!-- Main Settings Layout -->
+  <div class="row g-4">
+    <!-- Sidebar Navigation -->
+    <div class="col-12 col-md-3">
+      <div class="card border border-secondary-subtle bg-dark-card shadow-sm">
+        <div class="card-body p-3">
+          <div
+            class="nav flex-column nav-pills settings-nav gap-1"
+            id="settings-tab"
+            role="tablist"
+            aria-orientation="vertical"
+          >
+            <button
+              class="nav-link text-start py-2.5 px-3 rounded active d-flex align-items-center gap-2"
+              id="nav-profile-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#nav-profile"
+              type="button"
+              role="tab"
+              aria-controls="nav-profile"
+              aria-selected="true"
+            >
+              <i class="bi bi-person-circle fs-5"></i> Profile & Account
+            </button>
+            <button
+              class="nav-link text-start py-2.5 px-3 rounded d-flex align-items-center gap-2"
+              id="nav-security-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#nav-security"
+              type="button"
+              role="tab"
+              aria-controls="nav-security"
+              aria-selected="false"
+            >
+              <i class="bi bi-shield-lock-fill fs-5"></i> Security & Keys
+            </button>
+            <button
+              class="nav-link text-start py-2.5 px-3 rounded d-flex align-items-center gap-2"
+              id="nav-ai-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#nav-ai"
+              type="button"
+              role="tab"
+              aria-controls="nav-ai"
+              aria-selected="false"
+            >
+              <i class="bi bi-robot fs-5"></i> AI Bot Configurations
+            </button>
+            <button
+              class="nav-link text-start py-2.5 px-3 rounded d-flex align-items-center gap-2"
+              id="nav-network-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#nav-network"
+              type="button"
+              role="tab"
+              aria-controls="nav-network"
+              aria-selected="false"
+            >
+              <i class="bi bi-wifi fs-5"></i> Network Parameters
+            </button>
+            <button
+              class="nav-link text-start py-2.5 px-3 rounded d-flex align-items-center gap-2"
+              id="nav-notifications-tab"
+              data-bs-toggle="pill"
+              data-bs-target="#nav-notifications"
+              type="button"
+              role="tab"
+              aria-controls="nav-notifications"
+              aria-selected="false"
+            >
+              <i class="bi bi-bell-fill fs-5"></i> Notification Hub
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="col-12 col-md-9">
+      <div class="tab-content" id="settings-tabContent">
+        <!-- Profile Settings Tab -->
+        <div
+          class="tab-pane fade show active"
+          id="nav-profile"
+          role="tabpanel"
+          aria-labelledby="nav-profile-tab"
+        >
+          <div
+            class="card border border-secondary-subtle bg-dark-card shadow-sm mb-4"
+          >
+            <div
+              class="card-header border-bottom border-secondary-subtle bg-transparent py-3"
+            >
+              <h5 class="m-0 fw-bold text-light">
+                <i class="bi bi-person-fill text-info me-2"></i> User Profile
+                Settings
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <form
+                id="profileForm"
+                action="/api/settings/profile"
+                method="POST"
+              >
+                <div class="row g-3 mb-3">
+                  <div class="col-12 col-md-6">
+                    <label
+                      for="firstName"
+                      class="form-label text-secondary fs-7"
+                      >First Name</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control border-secondary-subtle bg-dark-input text-light"
+                      id="firstName"
+                      name="first_name"
+                      value="Alex"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label for="lastName" class="form-label text-secondary fs-7"
+                      >Last Name</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control border-secondary-subtle bg-dark-input text-light"
+                      id="lastName"
+                      name="last_name"
+                      value="Vance"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label
+                    for="profileEmail"
+                    class="form-label text-secondary fs-7"
+                    >Email Address</label
+                  >
+                  <input
+                    type="email"
+                    class="form-control border-secondary-subtle bg-dark-input text-light"
+                    id="profileEmail"
+                    name="email"
+                    value="alex.vance@tu5g-telecom.com"
+                    required
+                    autocomplete="email"
+                  />
+                </div>
+                <div class="mb-4">
+                  <label
+                    for="profileRole"
+                    class="form-label text-secondary fs-7"
+                    >Designated Role</label
+                  >
+                  <input
+                    type="text"
+                    class="form-control border-secondary-subtle bg-dark-input text-light-subtle"
+                    id="profileRole"
+                    value="TU5G Senior Operations Director"
+                    readonly
+                    disabled
+                  />
+                  <div class="form-text fs-8 text-secondary">
+                    Roles are managed by primary platform supervisors.
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  class="btn btn-info px-4 py-2 fw-semibold text-dark"
+                >
+                  <i class="bi bi-floppy-fill me-1"></i> Save Profile Details
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Security Settings Tab -->
+        <div
+          class="tab-pane fade"
+          id="nav-security"
+          role="tabpanel"
+          aria-labelledby="nav-security-tab"
+        >
+          <div
+            class="card border border-secondary-subtle bg-dark-card shadow-sm mb-4"
+          >
+            <div
+              class="card-header border-bottom border-secondary-subtle bg-transparent py-3"
+            >
+              <h5 class="m-0 fw-bold text-light">
+                <i class="bi bi-shield-lock-fill text-info me-2"></i> Update
+                Password Security
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <form
+                id="passwordForm"
+                action="/api/settings/password"
+                method="POST"
+              >
+                <div class="mb-3">
+                  <label
+                    for="currentPassword"
+                    class="form-label text-secondary fs-7"
+                    >Current Password</label
+                  >
+                  <input
+                    type="password"
+                    class="form-control border-secondary-subtle bg-dark-input text-light"
+                    id="currentPassword"
+                    name="current_password"
+                    required
+                  />
+                </div>
+                <div class="mb-3">
+                  <label
+                    for="newPassword"
+                    class="form-label text-secondary fs-7"
+                    >New Password</label
+                  >
+                  <input
+                    type="password"
+                    class="form-control border-secondary-subtle bg-dark-input text-light"
+                    id="newPassword"
+                    name="new_password"
+                    required
+                    minlength="8"
+                  />
+                  <div class="form-text fs-8 text-secondary">
+                    Minimum length of 8 characters with numbers and symbols.
+                  </div>
+                </div>
+                <div class="mb-4">
+                  <label
+                    for="confirmPassword"
+                    class="form-label text-secondary fs-7"
+                    >Confirm New Password</label
+                  >
+                  <input
+                    type="password"
+                    class="form-control border-secondary-subtle bg-dark-input text-light"
+                    id="confirmPassword"
+                    name="confirm_password"
+                    required
+                  />
+                </div>
+                <button
+                  type="submit"
+                  class="btn btn-info px-4 py-2 fw-semibold text-dark"
+                >
+                  <i class="bi bi-key-fill me-1"></i> Update Account Password
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- AI Bot Configuration Tab -->
+        <div
+          class="tab-pane fade"
+          id="nav-ai"
+          role="tabpanel"
+          aria-labelledby="nav-ai-tab"
+        >
+          <div
+            class="card border border-secondary-subtle bg-dark-card shadow-sm mb-4"
+          >
+            <div
+              class="card-header border-bottom border-secondary-subtle bg-transparent py-3"
+            >
+              <h5 class="m-0 fw-bold text-light">
+                <i class="bi bi-robot text-info me-2"></i> AI Orchestration Bot
+                Configurations
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <form
+                id="aiConfigForm"
+                action="/api/settings/ai-bots"
+                method="POST"
+              >
+                <!-- Bot 1: Network Optimizer -->
+                <div class="border-bottom border-secondary-subtle pb-4 mb-4">
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-3"
+                  >
+                    <div>
+                      <h6 class="text-light fw-bold mb-0">
+                        TU5G-Core Network Optimizer Bot
+                      </h6>
+                      <p class="text-secondary fs-8 mb-0">
+                        Monitors latency (RTT) spikes and dynamically reroutes
+                        spectrum slices.
+                      </p>
+                    </div>
+                    <div class="form-check form-switch m-0">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="optBotEnable"
+                        name="opt_bot_enabled"
+                        checked
+                      />
+                    </div>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="optBotLLM"
+                        class="form-label text-secondary fs-8"
+                        >AUTOMATION LLM MODEL</label
+                      >
+                      <select
+                        class="form-select border-secondary-subtle bg-dark-input text-light fs-7"
+                        id="optBotLLM"
+                        name="opt_bot_model"
+                      >
+                        <option value="gpt-4o">GPT-4o (High Speed Core)</option>
+                        <option value="claude-3-5-sonnet" selected>
+                          Claude 3.5 Sonnet (Dynamic Reasoning)
+                        </option>
+                        <option value="llama-3-70b">
+                          Llama 3 70B (Local Edge)
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="optBotKey"
+                        class="form-label text-secondary fs-8"
+                        >MODEL API KEY</label
+                      >
+                      <input
+                        type="password"
+                        class="form-control border-secondary-subtle bg-dark-input text-light fs-7"
+                        id="optBotKey"
+                        name="opt_bot_key"
+                        value="••••••••••••••••••••"
+                        placeholder="sk-..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bot 2: Customer Support Agent -->
+                <div class="border-bottom border-secondary-subtle pb-4 mb-4">
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-3"
+                  >
+                    <div>
+                      <h6 class="text-light fw-bold mb-0">
+                        e-SIM Auto-Provisioning Bot
+                      </h6>
+                      <p class="text-secondary fs-8 mb-0">
+                        Automatically validates eSIM profiles and initiates
+                        over-the-air (OTA) flashes.
+                      </p>
+                    </div>
+                    <div class="form-check form-switch m-0">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="esimBotEnable"
+                        name="esim_bot_enabled"
+                        checked
+                      />
+                    </div>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="esimBotLLM"
+                        class="form-label text-secondary fs-8"
+                        >AUTOMATION LLM MODEL</label
+                      >
+                      <select
+                        class="form-select border-secondary-subtle bg-dark-input text-light fs-7"
+                        id="esimBotLLM"
+                        name="esim_bot_model"
+                      >
+                        <option value="gpt-4o" selected>
+                          GPT-4o (Fast Validation)
+                        </option>
+                        <option value="claude-3-5-haiku">
+                          Claude 3.5 Haiku (Micro Engine)
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="esimBotKey"
+                        class="form-label text-secondary fs-8"
+                        >MODEL API KEY</label
+                      >
+                      <input
+                        type="password"
+                        class="form-control border-secondary-subtle bg-dark-input text-light fs-7"
+                        id="esimBotKey"
+                        name="esim_bot_key"
+                        value="••••••••••••••••••••"
+                        placeholder="sk-..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Bot 3: Holographic Frame Interpolator -->
+                <div class="mb-4">
+                  <div
+                    class="d-flex justify-content-between align-items-center mb-3"
+                  >
+                    <div>
+                      <h6 class="text-light fw-bold mb-0">
+                        Holo-Sync Neural Mesh Interpolator
+                      </h6>
+                      <p class="text-secondary fs-8 mb-0">
+                        AI-driven keyframe prediction for high-speed WebRTC
+                        volumetric projections.
+                      </p>
+                    </div>
+                    <div class="form-check form-switch m-0">
+                      <input
+                        class="form-check-input"
+                        type="checkbox"
+                        role="switch"
+                        id="holoBotEnable"
+                        name="holo_bot_enabled"
+                      />
+                    </div>
+                  </div>
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="holoBotLLM"
+                        class="form-label text-secondary fs-8"
+                        >AUTOMATION LLM MODEL</label
+                      >
+                      <select
+                        class="form-select border-secondary-subtle bg-dark-input text-light fs-7"
+                        id="holoBotLLM"
+                        name="holo_bot_model"
+                        disabled
+                      >
+                        <option value="gpt-4o">
+                          GPT-4o (Standard latency)
+                        </option>
+                        <option value="custom-edge-nn" selected>
+                          Custom Edge Neural Net (Hardware Accel)
+                        </option>
+                      </select>
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="holoBotKey"
+                        class="form-label text-secondary fs-8"
+                        >MODEL API KEY</label
+                      >
+                      <input
+                        type="password"
+                        class="form-control border-secondary-subtle bg-dark-input text-light fs-7"
+                        id="holoBotKey"
+                        name="holo_bot_key"
+                        placeholder="Hardware key..."
+                        disabled
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-info px-4 py-2 fw-semibold text-dark"
+                >
+                  <i class="bi bi-floppy-fill me-1"></i> Apply AI Configurations
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Network Parameters Tab -->
+        <div
+          class="tab-pane fade"
+          id="nav-network"
+          role="tabpanel"
+          aria-labelledby="nav-network-tab"
+        >
+          <div
+            class="card border border-secondary-subtle bg-dark-card shadow-sm mb-4"
+          >
+            <div
+              class="card-header border-bottom border-secondary-subtle bg-transparent py-3"
+            >
+              <h5 class="m-0 fw-bold text-light">
+                <i class="bi bi-wifi text-info me-2"></i> TU5G Core Cell
+                Parameters
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <form
+                id="networkForm"
+                action="/api/settings/network"
+                method="POST"
+              >
+                <div class="row g-3 mb-3">
+                  <div class="col-12 col-md-6">
+                    <label
+                      for="defaultMCC"
+                      class="form-label text-secondary fs-7"
+                      >Default Mobile Country Code (MCC)</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control border-secondary-subtle bg-dark-input text-light font-monospace"
+                      id="defaultMCC"
+                      name="mcc"
+                      value="413"
+                      required
+                      maxlength="3"
+                    />
+                  </div>
+                  <div class="col-12 col-md-6">
+                    <label
+                      for="defaultMNC"
+                      class="form-label text-secondary fs-7"
+                      >Default Mobile Network Code (MNC)</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control border-secondary-subtle bg-dark-input text-light font-monospace"
+                      id="defaultMNC"
+                      name="mnc"
+                      value="01"
+                      required
+                      maxlength="3"
+                    />
+                  </div>
+                </div>
+                <div class="row g-3 mb-4">
+                  <div class="col-12 col-md-4">
+                    <label
+                      for="signalThreshold"
+                      class="form-label text-secondary fs-7"
+                      >Min RSRP Signal (dBm)</label
+                    >
+                    <input
+                      type="number"
+                      class="form-control border-secondary-subtle bg-dark-input text-light font-monospace"
+                      id="signalThreshold"
+                      name="rsrp_threshold"
+                      value="-110"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label
+                      for="latencyThreshold"
+                      class="form-label text-secondary fs-7"
+                      >Target Latency RTT (ms)</label
+                    >
+                    <input
+                      type="number"
+                      class="form-control border-secondary-subtle bg-dark-input text-light font-monospace"
+                      id="latencyThreshold"
+                      name="rtt_threshold"
+                      value="15"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label
+                      for="bandwidthCap"
+                      class="form-label text-secondary fs-7"
+                      >Max Cell Bandwidth (MHz)</label
+                    >
+                    <input
+                      type="number"
+                      class="form-control border-secondary-subtle bg-dark-input text-light font-monospace"
+                      id="bandwidthCap"
+                      name="bandwidth_cap"
+                      value="100"
+                      required
+                    />
+                  </div>
+                </div>
+                <button
+                  type="submit"
+                  class="btn btn-info px-4 py-2 fw-semibold text-dark"
+                >
+                  <i class="bi bi-floppy-fill me-1"></i> Apply Cell Parameters
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div
+          class="tab-pane fade"
+          id="nav-notifications"
+          role="tabpanel"
+          aria-labelledby="nav-notifications-tab"
+        >
+          <div
+            class="card border border-secondary-subtle bg-dark-card shadow-sm mb-4"
+          >
+            <div
+              class="card-header border-bottom border-secondary-subtle bg-transparent py-3"
+            >
+              <h5 class="m-0 fw-bold text-light">
+                <i class="bi bi-bell-fill text-info me-2"></i> Notification &
+                Integration Preferences
+              </h5>
+            </div>
+            <div class="card-body p-4">
+              <form
+                id="notificationForm"
+                action="/api/settings/notifications"
+                method="POST"
+              >
+                <div class="mb-4">
+                  <h6 class="text-light fw-bold mb-3">Email System Warnings</h6>
+                  <div class="form-check mb-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="notifyEmailCritical"
+                      name="notify_email_critical"
+                      checked
+                    />
+                    <label
+                      class="form-check-label text-secondary fs-7"
+                      for="notifyEmailCritical"
+                    >
+                      Send immediate email for CRITICAL cell outages
+                    </label>
+                  </div>
+                  <div class="form-check mb-2">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="notifyEmailWeekly"
+                      name="notify_email_weekly"
+                    />
+                    <label
+                      class="form-check-label text-secondary fs-7"
+                      for="notifyEmailWeekly"
+                    >
+                      Send weekly automated network load digest reports
+                    </label>
+                  </div>
+                </div>
+
+                <div class="mb-4 border-top border-secondary-subtle pt-4">
+                  <h6 class="text-light fw-bold mb-3">
+                    Slack Webhook Integration
+                  </h6>
+                  <div class="mb-3">
+                    <label
+                      for="slackWebhook"
+                      class="form-label text-secondary fs-7"
+                      >Webhook Endpoint URL</label
+                    >
+                    <input
+                      type="text"
+                      class="form-control border-secondary-subtle bg-dark-input text-light fs-7"
+                      id="slackWebhook"
+                      name="slack_webhook"
+                      value=""
+                      placeholder="Enter your Slack webhook URL"
+                    />
+                  </div>
+                  <div class="form-check">
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      id="slackEnable"
+                      name="slack_enabled"
+                      checked
+                    />
+                    <label
+                      class="form-check-label text-secondary fs-7"
+                      for="slackEnable"
+                    >
+                      Enable posting cell load warnings directly to Slack
+                      channel `#tu5g-alerts`
+                    </label>
+                  </div>
+                </div>
+
+                <div class="mb-4 border-top border-secondary-subtle pt-4">
+                  <h6 class="text-light fw-bold mb-3">
+                    System Warnings Thresholds
+                  </h6>
+                  <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="alertRttThreshold"
+                        class="form-label text-secondary fs-7"
+                        >Alert on Latency RTT &gt; (ms)</label
+                      >
+                      <input
+                        type="number"
+                        class="form-control border-secondary-subtle bg-dark-input text-light font-monospace"
+                        id="alertRttThreshold"
+                        name="alert_rtt_threshold"
+                        value="30"
+                      />
+                    </div>
+                    <div class="col-12 col-md-6">
+                      <label
+                        for="alertLoadThreshold"
+                        class="form-label text-secondary fs-7"
+                        >Alert on Cell Active Load &gt; (%)</label
+                      >
+                      <input
+                        type="number"
+                        class="form-control border-secondary-subtle bg-dark-input text-light font-monospace"
+                        id="alertLoadThreshold"
+                        name="alert_load_threshold"
+                        value="85"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  class="btn btn-info px-4 py-2 fw-semibold text-dark"
+                >
+                  <i class="bi bi-floppy-fill me-1"></i> Save Alert Preferences
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  const ACTIVE_PAGE = "settings";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    // Handle disabling/enabling elements dynamically on the AI configuration tab
+    const optBotEnable = document.getElementById("optBotEnable");
+    const optBotLLM = document.getElementById("optBotLLM");
+    const optBotKey = document.getElementById("optBotKey");
+
+    const esimBotEnable = document.getElementById("esimBotEnable");
+    const esimBotLLM = document.getElementById("esimBotLLM");
+    const esimBotKey = document.getElementById("esimBotKey");
+
+    const holoBotEnable = document.getElementById("holoBotEnable");
+    const holoBotLLM = document.getElementById("holoBotLLM");
+    const holoBotKey = document.getElementById("holoBotKey");
+
+    function handleSwitchChange(checkbox, select, input) {
+      checkbox.addEventListener("change", () => {
+        const disabled = !checkbox.checked;
+        select.disabled = disabled;
+        input.disabled = disabled;
+      });
+    }
+
+    handleSwitchChange(optBotEnable, optBotLLM, optBotKey);
+    handleSwitchChange(esimBotEnable, esimBotLLM, esimBotKey);
+    handleSwitchChange(holoBotEnable, holoBotLLM, holoBotKey);
+  });
+</script>
+{% endblock %}

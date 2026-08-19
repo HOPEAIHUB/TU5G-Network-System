@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package hag;
+
+service HagOtpService {
+  rpc SendOtp (SendOtpRequest) returns (SendOtpResponse);
+  rpc VerifyOtp (VerifyOtpRequest) returns (VerifyOtpResponse);
+}
+
+message SendOtpRequest {
+  string phone = 1;
+}
+
+message SendOtpResponse {
+  bool success = 1;
+  string message = 2;
+  string otp = 3;
+}
+
+message VerifyOtpRequest {
+  string phone = 1;
+  string code = 2;
+}
+
+message VerifyOtpResponse {
+  bool success = 1;
+  string message = 2;
+}

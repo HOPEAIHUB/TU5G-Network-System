@@ -1,0 +1,29 @@
+{
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "expiresAt": {
+      "type": "string"
+    },
+    "identifier": {
+      "type": "string"
+    },
+    "isUsed": {
+      "type": "boolean"
+    },
+    "otpType": {
+      "enum": [
+        "email",
+        "phone"
+      ],
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "OtpVerification"
+}

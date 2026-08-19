@@ -1,0 +1,679 @@
+/* ==========================================================================
+   TU5G Network System - Core Theme & Application Stylesheet
+   Supports 3 Production Modes: Light Mode (Default), Dark Mode, Ultra Holographic
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Theme Variables & Root Colors
+   -------------------------------------------------------------------------- */
+
+/* Light Theme (Default: Clean, Professional, Modern) */
+:root, [data-theme="light"] {
+  --color-bg-base: #f8fafc;
+  --color-bg-surface: #ffffff;
+  --color-bg-card: #ffffff;
+  --color-bg-card-hover: #f1f5f9;
+  --color-bg-input: #ffffff;
+  --color-bg-header: #ffffff;
+  --color-border: #e2e8f0;
+  --color-border-hover: #cbd5e1;
+
+  --color-text-primary: #0f172a;
+  --color-text-normal: #334155;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+
+  --color-primary: #2563eb;
+  --color-primary-hover: #1d4ed8;
+  --color-secondary: #475569;
+  --color-success: #10b981;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-info: #06b6d4;
+
+  --navbar-bg: rgba(255, 255, 255, 0.95);
+  --navbar-gradient: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  --footer-bg: #f1f5f9;
+  --login-gradient: radial-gradient(circle at top right, #e2e8f0 0%, #f8fafc 100%);
+  
+  --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --card-hover-shadow: 0 10px 20px -3px rgba(37, 99, 235, 0.12), 0 4px 6px -4px rgba(0, 0, 0, 0.05);
+
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(226, 232, 240, 0.8);
+  --glass-blur: blur(12px);
+
+  --glow-primary: none;
+  --accent-gradient: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-thumb-hover: #94a3b8;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+/* Dark Theme (Futuristic Dark Telecom Interface) */
+[data-theme="dark"] {
+  --color-bg-base: #080c16;
+  --color-bg-surface: #0f1626;
+  --color-bg-card: #0f1626;
+  --color-bg-card-hover: #17223b;
+  --color-bg-input: #17223b;
+  --color-bg-header: #0d1322;
+  --color-border: #233454;
+  --color-border-hover: #334973;
+
+  --color-text-primary: #f8fafc;
+  --color-text-normal: #cbd5e1;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  --color-primary: #38bdf8;
+  --color-primary-hover: #0284c7;
+  --color-secondary: #64748b;
+  --color-success: #34d399;
+  --color-danger: #f87171;
+  --color-warning: #fbbf24;
+  --color-info: #22d3ee;
+
+  --navbar-bg: rgba(8, 12, 22, 0.95);
+  --navbar-gradient: linear-gradient(135deg, #05080e 0%, #111a2e 100%);
+  --footer-bg: #05080e;
+  --login-gradient: radial-gradient(circle at top right, #111c33 0%, #04060b 100%);
+  
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --card-hover-shadow: 0 10px 25px rgba(56, 189, 248, 0.15);
+
+  --glass-bg: rgba(15, 22, 38, 0.85);
+  --glass-border: rgba(35, 52, 84, 0.8);
+  --glass-blur: blur(16px);
+
+  --glow-primary: 0 0 12px rgba(56, 189, 248, 0.25);
+  --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+
+  --scrollbar-track: #080c16;
+  --scrollbar-thumb: #1e2e4a;
+  --scrollbar-thumb-hover: #38bdf8;
+}
+
+/* Ultra Holographic Mode (Cybernetic Glassmorphism & Animated Gradients) */
+[data-theme="holo"] {
+  --color-bg-base: #030712;
+  --color-bg-surface: rgba(15, 23, 42, 0.65);
+  --color-bg-card: rgba(15, 23, 42, 0.6);
+  --color-bg-card-hover: rgba(30, 41, 59, 0.75);
+  --color-bg-input: rgba(15, 23, 42, 0.75);
+  --color-bg-header: rgba(3, 7, 18, 0.8);
+  --color-border: rgba(0, 243, 255, 0.35);
+  --color-border-hover: rgba(168, 85, 247, 0.65);
+
+  --color-text-primary: #ffffff;
+  --color-text-normal: #e2e8f0;
+  --color-text-secondary: #00f3ff;
+  --color-text-muted: #94a3b8;
+
+  --color-primary: #00f3ff;
+  --color-primary-hover: #38bdf8;
+  --color-secondary: #a855f7;
+  --color-success: #00ffaa;
+  --color-danger: #ff0055;
+  --color-warning: #ffb700;
+  --color-info: #00f3ff;
+
+  --navbar-bg: rgba(3, 7, 18, 0.75);
+  --navbar-gradient: linear-gradient(135deg, rgba(3, 7, 18, 0.9) 0%, rgba(15, 23, 42, 0.8) 50%, rgba(30, 27, 75, 0.85) 100%);
+  --footer-bg: rgba(3, 7, 18, 0.85);
+  --login-gradient: radial-gradient(circle at top right, rgba(30, 27, 75, 0.9) 0%, rgba(3, 7, 18, 0.95) 100%);
+
+  --card-shadow: 0 8px 32px 0 rgba(0, 243, 255, 0.15), inset 0 0 1px 1px rgba(255, 255, 255, 0.1);
+  --card-hover-shadow: 0 12px 40px 0 rgba(168, 85, 247, 0.3), 0 0 25px rgba(0, 243, 255, 0.4);
+
+  --glass-bg: rgba(15, 23, 42, 0.55);
+  --glass-border: rgba(0, 243, 255, 0.35);
+  --glass-blur: blur(20px);
+
+  --glow-primary: 0 0 20px rgba(0, 243, 255, 0.5);
+  --accent-gradient: linear-gradient(135deg, #00f3ff 0%, #a855f7 50%, #ff007f 100%);
+
+  --scrollbar-track: #030712;
+  --scrollbar-thumb: rgba(0, 243, 255, 0.4);
+  --scrollbar-thumb-hover: #00f3ff;
+}
+
+/* --------------------------------------------------------------------------
+   2. Base Resets & Transitions
+   -------------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--color-bg-base) !important;
+  color: var(--color-text-normal) !important;
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+  overflow-x: hidden;
+  position: relative;
+}
+
+main {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+/* Smooth Page Entrance Animation */
+.page-fade-in {
+  animation: pageEntrance 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pageEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. Custom Scrollbars
+   -------------------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover);
+}
+
+/* --------------------------------------------------------------------------
+   4. Particle Background (Holographic Mode)
+   -------------------------------------------------------------------------- */
+.holo-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.75;
+  transition: opacity 0.5s ease;
+}
+
+/* Animated Gradient Body Overlay in Holo Mode */
+[data-theme="holo"] body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(125deg, rgba(3, 7, 18, 0.95), rgba(15, 23, 42, 0.8), rgba(30, 27, 75, 0.7), rgba(3, 7, 18, 0.95));
+  background-size: 400% 400%;
+  animation: holoGradientShift 18s ease infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+@keyframes holoGradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* --------------------------------------------------------------------------
+   5. Glassmorphism & Cards
+   -------------------------------------------------------------------------- */
+.card, .glass-card {
+  background-color: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border) !important;
+  border-radius: 12px;
+  box-shadow: var(--card-shadow);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.3s ease;
+  color: var(--color-text-normal);
+}
+
+.card:hover, .glass-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--card-hover-shadow);
+  border-color: var(--color-border-hover) !important;
+}
+
+[data-theme="holo"] .card,
+[data-theme="holo"] .glass-card,
+.glass-panel {
+  background: var(--glass-bg) !important;
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border) !important;
+}
+
+[data-theme="holo"] .card:hover,
+[data-theme="holo"] .glass-card:hover {
+  border-color: rgba(0, 243, 255, 0.6) !important;
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.35), inset 0 0 15px rgba(168, 85, 247, 0.2);
+}
+
+.card-header, .card-footer {
+  background-color: rgba(0, 0, 0, 0.03) !important;
+  border-color: var(--color-border) !important;
+}
+
+[data-theme="dark"] .card-header, [data-theme="dark"] .card-footer,
+[data-theme="holo"] .card-header, [data-theme="holo"] .card-footer {
+  background-color: rgba(255, 255, 255, 0.03) !important;
+}
+
+/* --------------------------------------------------------------------------
+   6. Navigation & Navbar
+   -------------------------------------------------------------------------- */
+.navbar {
+  background: var(--navbar-gradient) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 1030;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.navbar-brand {
+  letter-spacing: 1px;
+  font-weight: 700;
+  color: var(--color-text-primary) !important;
+}
+
+.navbar-nav .nav-link {
+  color: var(--color-text-secondary) !important;
+  font-weight: 500;
+  padding: 0.5rem 0.85rem !important;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--color-text-primary) !important;
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .navbar-nav .nav-link:hover,
+[data-theme="holo"] .navbar-nav .nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+.navbar-nav .nav-link.active {
+  color: var(--color-primary) !important;
+  background-color: rgba(37, 99, 235, 0.1);
+  font-weight: 600;
+}
+
+[data-theme="holo"] .navbar-nav .nav-link.active {
+  color: #00f3ff !important;
+  background-color: rgba(0, 243, 255, 0.15);
+  box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+}
+
+/* --------------------------------------------------------------------------
+   7. Typography & Glow Utilities
+   -------------------------------------------------------------------------- */
+.text-gradient {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  display: inline-block;
+}
+
+.text-primary-theme { color: var(--color-primary) !important; }
+.text-secondary-theme { color: var(--color-text-secondary) !important; }
+.text-muted-theme { color: var(--color-text-muted) !important; }
+
+.glow-text {
+  text-shadow: 0 0 10px rgba(0, 243, 255, 0.6), 0 0 20px rgba(168, 85, 247, 0.4);
+}
+
+.glow-box {
+  box-shadow: var(--glow-primary);
+}
+
+.glow-cyan {
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+}
+
+.glow-purple {
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.5);
+}
+
+.tracking-wider { letter-spacing: 0.06em; }
+.uppercase { text-transform: uppercase; }
+.fs-7 { font-size: 0.85rem !important; }
+.fs-8 { font-size: 0.75rem !important; }
+.fs-9 { font-size: 0.65rem !important; }
+.cursor-pointer { cursor: pointer; }
+
+/* --------------------------------------------------------------------------
+   8. Form Controls & Floating Inputs
+   -------------------------------------------------------------------------- */
+.form-control, .form-select {
+  background-color: var(--color-bg-input) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 0.25rem rgba(56, 189, 248, 0.2) !important;
+  outline: none;
+}
+
+[data-theme="holo"] .form-control:focus,
+[data-theme="holo"] .form-select:focus {
+  border-color: #00f3ff !important;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.4) !important;
+}
+
+.form-control::placeholder {
+  color: var(--color-text-muted) !important;
+  opacity: 0.8;
+}
+
+.is-invalid {
+  border-color: var(--color-danger) !important;
+}
+.is-invalid:focus {
+  box-shadow: 0 0 0 0.25rem rgba(239, 68, 68, 0.25) !important;
+}
+
+.is-valid {
+  border-color: var(--color-success) !important;
+}
+
+.invalid-feedback {
+  color: var(--color-danger);
+  font-size: 0.8rem;
+  margin-top: 0.35rem;
+  display: block;
+}
+
+/* Password Strength Indicator Bar */
+.password-strength-meter {
+  height: 6px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-top: 6px;
+}
+
+[data-theme="dark"] .password-strength-meter,
+[data-theme="holo"] .password-strength-meter {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.password-strength-bar {
+  height: 100%;
+  width: 0%;
+  transition: width 0.35s ease, background-color 0.35s ease;
+}
+
+/* --------------------------------------------------------------------------
+   9. Notifications & Toast System
+   -------------------------------------------------------------------------- */
+.toast-container {
+  z-index: 1090 !important;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  background-color: var(--color-bg-card) !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.toast.hiding {
+  animation: fadeOutRight 0.3s ease forwards;
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.toast-header {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+  border-bottom: 1px solid var(--color-border) !important;
+  color: var(--color-text-primary) !important;
+  padding: 0.6rem 0.9rem;
+}
+
+[data-theme="dark"] .toast-header,
+[data-theme="holo"] .toast-header {
+  background-color: rgba(255, 255, 255, 0.04) !important;
+}
+
+.toast-body {
+  padding: 0.75rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--color-text-normal);
+}
+
+/* Category Accent Borders for Toasts */
+.toast-success { border-left: 4px solid var(--color-success) !important; }
+.toast-error, .toast-danger { border-left: 4px solid var(--color-danger) !important; }
+.toast-warning { border-left: 4px solid var(--color-warning) !important; }
+.toast-info { border-left: 4px solid var(--color-info) !important; }
+
+/* --------------------------------------------------------------------------
+   10. Loading Overlays & Spinner States
+   -------------------------------------------------------------------------- */
+/* Global Fullscreen Loading Overlay */
+.global-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(8, 12, 22, 0.75);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: opacity 0.3s ease;
+}
+
+[data-theme="light"] .global-loading-overlay {
+  background-color: rgba(255, 255, 255, 0.85);
+  color: #0f172a;
+}
+
+.global-loading-overlay .spinner-ring {
+  width: 56px;
+  height: 56px;
+  border: 4px solid rgba(56, 189, 248, 0.2);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+
+[data-theme="holo"] .global-loading-overlay .spinner-ring {
+  border-top-color: #00f3ff;
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.5);
+}
+
+/* Per-Element Loading Overlay */
+.element-loading-relative {
+  position: relative !important;
+  min-height: 80px;
+}
+
+.element-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--glass-bg);
+  backdrop-filter: blur(6px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Button Loading Pulse */
+.btn .spinner-border-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 0.15em;
+}
+
+/* --------------------------------------------------------------------------
+   11. Animations & Pulse
+   -------------------------------------------------------------------------- */
+@keyframes pulse-animation {
+  0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); }
+  70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
+
+.animate-pulse {
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.98); }
+}
+
+.animate-glow {
+  animation: pulseGlow 2.5s ease-in-out infinite;
+}
+
+/* --------------------------------------------------------------------------
+   12. Table Enhancements
+   -------------------------------------------------------------------------- */
+.table {
+  --bs-table-bg: transparent !important;
+  --bs-table-color: var(--color-text-normal) !important;
+  border-color: var(--color-border) !important;
+}
+
+.table th {
+  color: var(--color-text-secondary) !important;
+  font-weight: 600;
+  border-bottom: 2px solid var(--color-border) !important;
+}
+
+.table td {
+  border-color: var(--color-border) !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: var(--color-bg-card-hover) !important;
+}
+
+/* --------------------------------------------------------------------------
+   13. Footer
+   -------------------------------------------------------------------------- */
+.footer {
+  background: var(--footer-bg) !important;
+  border-top: 1px solid var(--color-border) !important;
+  color: var(--color-text-secondary);
+  transition: background 0.3s ease;
+  z-index: 10;
+}
+
+.footer a {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.footer a:hover {
+  color: var(--color-primary);
+}
+
+/* --------------------------------------------------------------------------
+   14. Responsive Breakpoints & Mobile Tweaks
+   -------------------------------------------------------------------------- */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background-color: var(--color-bg-card);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    margin-top: 0.75rem;
+    box-shadow: var(--card-shadow);
+  }
+}
+
+@media (max-width: 768px) {
+  .navbar-brand { font-size: 1.15rem; }
+  .toast-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0.75rem !important;
+  }
+  .toast {
+    width: 100%;
+  }
+}
+
+@media (max-width: 576px) {
+  .card-body { padding: 1.1rem !important; }
+}

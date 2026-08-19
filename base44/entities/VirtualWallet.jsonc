@@ -1,0 +1,21 @@
+{
+  "properties": {
+    "balance": {
+      "default": 0,
+      "type": "number"
+    },
+    "currency": {
+      "default": "USD",
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "vpaAddress": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "VirtualWallet"
+}

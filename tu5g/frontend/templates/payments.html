@@ -1,0 +1,606 @@
+{% extends "base.html" %}
+
+{% block title %}HOPE PAY — TU5G{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-blue: #0066ff;
+        --accent-gold: #ffb800;
+        --dark-bg: #0a0e27;
+        --surface: #141b3b;
+        --surface-hover: #1e2652;
+        --text-light: #ffffff;
+        --text-muted: #8b94cc;
+        --color-border: rgba(255, 255, 255, 0.08);
+    }
+
+    .finance-card {
+        background: rgba(20, 27, 59, 0.6);
+        border: 1px solid var(--color-border);
+        border-radius: 20px;
+        backdrop-filter: blur(12px);
+        transition: transform 0.3s ease;
+    }
+
+    .balance-card {
+        background: linear-gradient(135deg, #0066ff 0%, #0044cc 100%);
+        border: none;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .balance-card::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .stat-mini-card {
+        background: rgba(10, 14, 39, 0.5);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 1rem;
+    }
+
+    .badge-activated-pay {
+        background: rgba(0, 102, 255, 0.15);
+        border: 1px solid rgba(0, 102, 255, 0.5);
+        color: #66b2ff;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 50px;
+    }
+
+    .badge-activated-ups {
+        background: rgba(255, 184, 0, 0.15);
+        border: 1px solid rgba(255, 184, 0, 0.5);
+        color: var(--accent-gold);
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        font-size: 0.75rem;
+        padding: 0.3rem 0.8rem;
+        border-radius: 50px;
+    }
+
+    .vpa-address-box {
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px dashed var(--accent-gold);
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+        font-family: 'Orbitron', sans-serif;
+        letter-spacing: 0.05em;
+        color: var(--accent-gold);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-finance {
+        --bs-table-bg: transparent;
+        --bs-table-color: var(--text-light);
+        border-color: var(--color-border);
+    }
+
+    .table-finance th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--text-muted);
+        font-weight: 700;
+        border-bottom: 2px solid var(--color-border);
+    }
+
+    .table-finance td {
+        vertical-align: middle;
+        font-size: 0.9rem;
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+    }
+
+    .btn-action-round {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(0, 102, 255, 0.1);
+        color: var(--primary-blue);
+        border: 1px solid rgba(0, 102, 255, 0.2);
+        transition: all 0.2s ease;
+    }
+    .btn-action-round:hover {
+        background: var(--primary-blue);
+        color: white;
+    }
+
+    .method-select-box {
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        background: rgba(10, 14, 39, 0.4);
+    }
+    .method-select-box:hover, .method-select-box.active {
+        border-color: var(--primary-blue);
+        background: rgba(0, 102, 255, 0.1);
+    }
+
+    .modal-custom-finance {
+        background-color: #0f1430 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 20px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <!-- Top Bar with Badges -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5 gap-3">
+        <div>
+            <h2 class="fw-bold text-white mb-1">Financial Dashboard</h2>
+            <p class="text-secondary mb-0">Manage your HOPE wallet and UPS PAY settlements.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <span class="badge-activated-pay">
+                <i class="bi bi-wallet2 me-1"></i> HOPE PAY ACTIVATED
+            </span>
+            <span class="badge-activated-ups">
+                <i class="bi bi-lightning-charge-fill me-1"></i> UPS PAY ACTIVATED
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- LEFT COLUMN: WALLET & STATS -->
+        <div class="col-lg-5">
+            
+            <!-- HOPE PAY BALANCE CARD -->
+            <div class="card finance-card balance-card p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="uppercase fw-bold fs-7 opacity-75">Available Hope Balance</span>
+                    <i class="bi bi-cpu fs-4 opacity-50"></i>
+                </div>
+                <h1 class="display-4 fw-bold mb-4 font-monospace">$<span id="walletBalance">0.00</span></h1>
+                
+                <div class="d-flex gap-3">
+                    <button class="btn btn-light fw-bold px-4 py-2 rounded-3" data-bs-toggle="modal" data-bs-target="#addFundsModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Funds
+                    </button>
+                    <button class="btn btn-outline-light fw-bold px-4 py-2 rounded-3" id="btnRefreshWallet">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- MINI STATS -->
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <div class="stat-mini-card">
+                        <span class="text-secondary fs-9 uppercase d-block mb-1">Total Received</span>
+                        <h5 class="fw-bold text-success mb-0">+$<span id="totalReceived">0.00</span></h5>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stat-mini-card">
+                        <span class="text-secondary fs-9 uppercase d-block mb-1">Total Spent</span>
+                        <h5 class="fw-bold text-danger mb-0">-$<span id="totalSpent">0.00</span></h5>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPS PAY SECTION -->
+            <div class="card finance-card p-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold text-white mb-0"><i class="bi bi-shield-check text-accent-gold me-2"></i>UPS PAY (VPA)</h5>
+                    <a href="#" class="text-accent-gold text-decoration-none fs-8 fw-bold">Management &rarr;</a>
+                </div>
+                
+                <p class="text-muted fs-8 mb-3">Your Unified Payment Service address for P2P transfers:</p>
+                <div class="vpa-address-box mb-4">
+                    <span id="vpaAddress">Loading...</span>
+                    <button class="btn btn-link p-0 text-accent-gold" onclick="copyVPA()">
+                        <i class="bi bi-copy"></i>
+                    </button>
+                </div>
+
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button class="btn btn-outline-warning w-100 py-2 fs-7 fw-bold" data-bs-toggle="modal" data-bs-target="#transferModal">
+                            <i class="bi bi-send me-1"></i> SEND MONEY
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-outline-info w-100 py-2 fs-7 fw-bold" id="btnCreateVPA">
+                            <i class="bi bi-plus-circle me-1"></i> CREATE VPA
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN: TRANSACTION HISTORY -->
+        <div class="col-lg-7">
+            <div class="card finance-card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h5 class="fw-bold text-white mb-0">Transaction History</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Filter: All Time
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-dark">
+                            <li><a class="dropdown-item active" href="#">All Time</a></li>
+                            <li><a class="dropdown-item" href="#">Last 30 Days</a></li>
+                            <li><a class="dropdown-item" href="#">Wallet Inflow</a></li>
+                            <li><a class="dropdown-item" href="#">Payments</a></li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-finance">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Type / Description</th>
+                                <th>Status</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionTableBody">
+                            <!-- Transactions will be rendered here -->
+                            <tr id="emptyTableMsg">
+                                <td colspan="4" class="text-center py-5">
+                                    <div class="text-secondary">
+                                        <i class="bi bi-journal-text display-4 d-block mb-3 opacity-25"></i>
+                                        <p class="mb-0 fs-8">No transaction packets found in your wallet history.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- MODAL: ADD FUNDS -->
+<div class="modal fade" id="addFundsModal" tabindex="-1" aria-labelledby="addFundsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-custom-finance p-2">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white" id="addFundsModalLabel">Deposit to HOPE Wallet</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="addFundsForm">
+                    <div class="mb-4 text-center">
+                        <label class="form-label text-secondary fs-8 uppercase mb-2">Deposit Amount (USD)</label>
+                        <div class="input-group input-group-lg w-75 mx-auto">
+                            <span class="input-group-text bg-dark border-secondary-subtle text-white fw-bold">$</span>
+                            <input type="number" class="form-control bg-dark border-secondary-subtle text-white fw-bold text-center" id="depositAmount" placeholder="100.00" min="1" required>
+                        </div>
+                    </div>
+
+                    <h6 class="fs-8 text-secondary uppercase fw-bold mb-3">Select Payment Protocol:</h6>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <div class="method-select-box active" data-method="card">
+                                <i class="bi bi-credit-card fs-4 d-block mb-2"></i>
+                                <span class="fs-8 fw-bold">Card / Debit</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="method-select-box" data-method="bank">
+                                <i class="bi bi-bank fs-4 d-block mb-2"></i>
+                                <span class="fs-8 fw-bold">Direct Bank</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="method-select-box" data-method="crypto">
+                                <i class="bi bi-currency-bitcoin fs-4 d-block mb-2"></i>
+                                <span class="fs-8 fw-bold">Crypto Wallet</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="method-select-box" data-method="external">
+                                <i class="bi bi-arrow-left-right fs-4 d-block mb-2"></i>
+                                <span class="fs-8 fw-bold">External VPA</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-3" id="btnConfirmDeposit">
+                        <i class="bi bi-check2-circle me-1"></i> SECURE DEPOSIT
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: TRANSFER (UPS PAY) -->
+<div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content modal-custom-finance p-2">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white" id="transferModalLabel">UPS PAY: P2P Transfer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="transferForm">
+                    <!-- Recipient VPA -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Recipient VPA Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary-subtle"><i class="bi bi-person-badge text-accent-gold"></i></span>
+                            <input type="text" class="form-control bg-dark border-secondary-subtle text-white font-monospace" id="recipientVPA" placeholder="username@upspay" required>
+                        </div>
+                        <div class="form-text fs-9 text-muted">Transfers are instant and non-reversible.</div>
+                    </div>
+
+                    <!-- Amount -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Transfer Amount ($)</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-dark border-secondary-subtle text-white">$</span>
+                            <input type="number" class="form-control bg-dark border-secondary-subtle text-white fw-bold" id="transferAmount" placeholder="0.00" min="0.01" step="0.01" required>
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Description / Memo (Optional)</label>
+                        <textarea class="form-control bg-dark border-secondary-subtle text-white fs-8" id="transferMemo" rows="2" placeholder="Settlement for services..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 py-3 fw-bold rounded-3 text-dark" id="btnConfirmTransfer">
+                        <i class="bi bi-lightning-charge-fill me-1"></i> BROADCAST SETTLEMENT
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        let walletBalanceValue = 250.00; // Mock starting balance
+        let totalReceivedValue = 500.00;
+        let totalSpentValue = 250.00;
+        let transactions = [
+            { id: "TX9021", date: "2026-07-28 14:22", desc: "SIM Store: Premium Number +984-777", type: "out", amount: 100.00, status: "completed" },
+            { id: "TX9020", date: "2026-07-27 09:15", desc: "UPS PAY: Transfer from alice@upspay", type: "in", amount: 150.00, status: "completed" },
+            { id: "TX9019", date: "2026-07-26 21:04", desc: "Wallet Deposit: Card ****4242", type: "in", amount: 350.00, status: "completed" },
+            { id: "TX9018", date: "2026-07-26 18:30", desc: "UPS PAY: Settlement to store@upspay", type: "out", amount: 150.00, status: "completed" }
+        ];
+
+        function refreshUI() {
+            document.getElementById("walletBalance").textContent = walletBalanceValue.toFixed(2);
+            document.getElementById("totalReceived").textContent = totalReceivedValue.toFixed(2);
+            document.getElementById("totalSpent").textContent = totalSpentValue.toFixed(2);
+            
+            // Mock VPA
+            document.getElementById("vpaAddress").textContent = "user_" + Math.floor(1000 + Math.random() * 9000) + "@upspay";
+
+            renderTransactions();
+        }
+
+        function renderTransactions() {
+            const table = document.getElementById("transactionTableBody");
+            const emptyMsg = document.getElementById("emptyTableMsg");
+
+            if (transactions.length === 0) {
+                emptyMsg.classList.remove("d-none");
+                // Clear other rows
+                const rows = table.querySelectorAll("tr:not(#emptyTableMsg)");
+                rows.forEach(r => r.remove());
+                return;
+            }
+
+            emptyMsg.classList.add("d-none");
+            
+            // Clear current list
+            const rows = table.querySelectorAll("tr:not(#emptyTableMsg)");
+            rows.forEach(r => r.remove());
+
+            transactions.forEach(tx => {
+                const amountClass = tx.type === 'in' ? 'text-success' : 'text-danger';
+                const prefix = tx.type === 'in' ? '+' : '-';
+                
+                let statusHtml = '';
+                if (tx.status === 'completed') {
+                    statusHtml = '<span class="status-dot bg-success"></span> <span class="fs-9 text-muted uppercase fw-bold">Success</span>';
+                } else if (tx.status === 'pending') {
+                    statusHtml = '<span class="status-dot bg-warning"></span> <span class="fs-9 text-muted uppercase fw-bold">Pending</span>';
+                } else {
+                    statusHtml = '<span class="status-dot bg-danger"></span> <span class="fs-9 text-muted uppercase fw-bold">Failed</span>';
+                }
+
+                const row = `
+                    <tr>
+                        <td>
+                            <span class="d-block text-white fs-8">${tx.date.split(' ')[0]}</span>
+                            <span class="text-secondary fs-9">${tx.date.split(' ')[1]}</span>
+                        </td>
+                        <td>
+                            <span class="d-block text-white fw-bold">${tx.desc}</span>
+                            <span class="text-secondary fs-9 font-monospace">ID: ${tx.id}</span>
+                        </td>
+                        <td>${statusHtml}</td>
+                        <td class="text-end fw-bold ${amountClass}">${prefix}$${tx.amount.toFixed(2)}</td>
+                    </tr>
+                `;
+                table.insertAdjacentHTML("afterbegin", row);
+            });
+        }
+
+        // Initialize
+        refreshUI();
+
+        // Copy VPA helper
+        window.copyVPA = function() {
+            const text = document.getElementById("vpaAddress").textContent;
+            navigator.clipboard.writeText(text);
+            if (window.TU5G_Notifications) {
+                TU5G_Notifications.success("VPA address copied to clipboard.");
+            }
+        };
+
+        // Method selector logic
+        document.querySelectorAll(".method-select-box").forEach(box => {
+            box.addEventListener("click", function() {
+                document.querySelectorAll(".method-select-box").forEach(b => b.classList.remove("active"));
+                this.classList.add("active");
+            });
+        });
+
+        // Add Funds Submit
+        document.getElementById("addFundsForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById("depositAmount").value);
+            const btn = document.getElementById("btnConfirmDeposit");
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> PROCESSING...';
+
+            fetch("/payments/add-funds", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ amount: amount })
+            })
+            .then(res => {
+                // Mock Success behavior
+                setTimeout(() => {
+                    walletBalanceValue += amount;
+                    totalReceivedValue += amount;
+                    
+                    transactions.push({
+                        id: "TX" + Math.floor(10000 + Math.random() * 90000),
+                        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                        desc: "Wallet Deposit: Secure Protocol",
+                        type: "in",
+                        amount: amount,
+                        status: "completed"
+                    });
+
+                    refreshUI();
+                    bootstrap.Modal.getInstance(document.getElementById("addFundsModal")).hide();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-check2-circle me-1"></i> SECURE DEPOSIT';
+                    
+                    if (window.TU5G_Notifications) {
+                        TU5G_Notifications.success(`$${amount} successfully added to HOPE Wallet.`);
+                    }
+                }, 1500);
+            });
+        });
+
+        // Transfer Submit
+        document.getElementById("transferForm").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const vpa = document.getElementById("recipientVPA").value;
+            const amount = parseFloat(document.getElementById("transferAmount").value);
+            const memo = document.getElementById("transferMemo").value;
+            
+            if (amount > walletBalanceValue) {
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.danger("Insufficient HOPE balance for this settlement.");
+                }
+                return;
+            }
+
+            const btn = document.getElementById("btnConfirmTransfer");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> SETTLING...';
+
+            fetch("/payments/transfer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ vpa: vpa, amount: amount, memo: memo })
+            })
+            .then(res => {
+                setTimeout(() => {
+                    walletBalanceValue -= amount;
+                    totalSpentValue += amount;
+                    
+                    transactions.push({
+                        id: "UPS" + Math.floor(10000 + Math.random() * 90000),
+                        date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                        desc: `UPS PAY: Transfer to ${vpa}`,
+                        type: "out",
+                        amount: amount,
+                        status: "completed"
+                    });
+
+                    refreshUI();
+                    bootstrap.Modal.getInstance(document.getElementById("transferModal")).hide();
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-lightning-charge-fill me-1"></i> BROADCAST SETTLEMENT';
+                    
+                    if (window.TU5G_Notifications) {
+                        TU5G_Notifications.success(`Settlement of $${amount} to ${vpa} broadcasted.`);
+                    }
+                }, 1800);
+            });
+        });
+
+        document.getElementById("btnRefreshWallet").addEventListener("click", function() {
+            this.innerHTML = '<i class="bi bi-arrow-clockwise animate-spin"></i>';
+            setTimeout(() => {
+                refreshUI();
+                this.innerHTML = '<i class="bi bi-arrow-clockwise"></i>';
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.info("Wallet synchronization complete.");
+                }
+            }, 800);
+        });
+
+        document.getElementById("btnCreateVPA").addEventListener("click", function() {
+            if (window.TU5G_Notifications) {
+                TU5G_Notifications.info("VPA Namespace generation initialized...");
+            }
+            setTimeout(refreshUI, 1000);
+        });
+    });
+</script>
+<style>
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+    .animate-spin {
+        animation: spin 1s linear infinite;
+        display: inline-block;
+    }
+</style>
+{% endblock %}

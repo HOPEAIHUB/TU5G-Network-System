@@ -1,0 +1,13 @@
+{
+  "name": "tu5g-frontend",
+  "version": "1.0.0",
+  "description": "Frontend static components of the TU5G Universal 5G GSM ecosystem.",
+  "scripts": {
+    "lint": "htmlhint \"**/*.html\"",
+    "format": "prettier --write \"**/*.{html,css,js,json,md}\""
+  },
+  "devDependencies": {
+    "htmlhint": "^1.1.4",
+    "prettier": "^3.2.5"
+  }
+}

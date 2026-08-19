@@ -1,0 +1,137 @@
+version: '3.8'
+
+services:
+  # ----------------------------------------------------
+  # Database Service: PostgreSQL 15
+  # ----------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    container_name: tu5g-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tu5g}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-CHANGE_ME}
+      POSTGRES_DB: ${POSTGRES_DB:-tu5g}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tu5g-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tu5g} -d ${POSTGRES_DB:-tu5g}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------
+  # Cache & Broker Service: Redis
+  # ----------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: tu5g-redis
+    restart: always
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - tu5g-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------
+  # Object Storage Service: MinIO
+  # ----------------------------------------------------
+  minio:
+    image: minio/minio:RELEASE.2024-01-28T22-35-53Z
+    container_name: tu5g-minio
+    restart: always
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-tu5g_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-CHANGE_ME}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"  # S3 API
+      - "9001:9001"  # Console GUI
+    command: server /data --console-address ":9001"
+    networks:
+      - tu5g-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ----------------------------------------------------
+  # Backend Service: FastAPI
+  # ----------------------------------------------------
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tu5g-backend
+    restart: always
+    env_file:
+      - .env
+    expose:
+      - "8000"
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - tu5g-network
+
+  # ----------------------------------------------------
+  # Frontend Service: Static Web App served via Nginx
+  # ----------------------------------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: tu5g-frontend
+    restart: always
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    networks:
+      - tu5g-network
+
+  # ----------------------------------------------------
+  # Reverse Proxy & SSL Gateway: Nginx SSL Reverse Proxy
+  # ----------------------------------------------------
+  nginx-proxy:
+    image: nginx:1.25-alpine
+    container_name: tu5g-nginx-proxy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - tu5g-network
+
+networks:
+  tu5g-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local

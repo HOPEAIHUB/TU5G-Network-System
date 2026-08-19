@@ -1,0 +1,348 @@
+openapi: 3.0.3
+info:
+  title: TUGS API
+  version: "1.0"
+  description: |
+    TU5G Gateway System (TUGS) OpenAPI 3.0 Specification.
+    Provides automated OTP authentication, KYC report submission with multipart file uploads, and health monitoring for sovereign identity verification.
+  contact:
+    name: Timothy Abraham (T-Driven)
+    email: support@tu5g.online
+    url: https://www.tu5g.online
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://tugs.tu5g.online/api/v1
+    description: Production TUGS Gateway
+  - url: http://localhost:8080/api/v1
+    description: Local Development Gateway
+
+paths:
+  /otp/request:
+    post:
+      summary: Request OTP Verification Code
+      description: Sends a One-Time Password (OTP) request to the specified phone number (+984799... format).
+      operationId: requestOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpRequest'
+            example:
+              phone: "+984799123456"
+      responses:
+        '200':
+          description: OTP requested successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpRequestResponse'
+              example:
+                message: "OTP dispatched to subscriber"
+                token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                expires_in: 300
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /otp/verify:
+    post:
+      summary: Verify OTP Code
+      description: Verifies the entered OTP code against the issued token for a phone number.
+      operationId: verifyOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OtpVerify'
+            example:
+              phone: "+984799123456"
+              otp: "847990"
+              token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: OTP verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OtpVerifyResponse'
+              example:
+                success: true
+                message: "Identity verified successfully"
+                auth_token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /report:
+    post:
+      summary: Submit KYC Verification Report
+      description: Uploads identity document and submits a complete KYC verification report.
+      operationId: submitKycReport
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/KycReportForm'
+      responses:
+        '200':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycReportResponse'
+              example:
+                status: "SUCCESS"
+                report_id: "REP-TU5G-984721"
+                message: "KYC report processed and verified"
+                timestamp: "2026-08-14T19:25:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /health:
+    get:
+      summary: System Health Check
+      description: Returns operational status of TUGS gateway microservices.
+      operationId: getHealthStatus
+      responses:
+        '200':
+          description: Health status details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthStatus'
+              example:
+                status: "OK"
+                service: "TU5G Gateway"
+                version: "1.0.0"
+                timestamp: "2026-08-14T19:25:00Z"
+                services:
+                  hag: "UP"
+                  hmail: "UP"
+                  qsac: "UP"
+                  vault: "UP"
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Authorization header using the Bearer scheme.
+
+  schemas:
+    OtpRequest:
+      type: object
+      required:
+        - phone
+      properties:
+        phone:
+          type: string
+          pattern: '^\+[0-9]{7,15}$'
+          description: Phone number in E.164 / +984799 format.
+          example: "+984799123456"
+
+    OtpRequestResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "OTP dispatched"
+        token:
+          type: string
+          description: Verification session token required for /otp/verify
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        expires_in:
+          type: integer
+          description: Expiration time in seconds
+          example: 300
+
+    OtpVerify:
+      type: object
+      required:
+        - phone
+        - otp
+        - token
+      properties:
+        phone:
+          type: string
+          example: "+984799123456"
+        otp:
+          type: string
+          pattern: '^[0-9]{4,8}$'
+          example: "847990"
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    OtpVerifyResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "OTP verification succeeded"
+        auth_token:
+          type: string
+          description: Authenticated JWT token for subsequent API calls
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    KycReportForm:
+      type: object
+      required:
+        - file
+        - phone
+        - document_type
+      properties:
+        file:
+          type: string
+          format: binary
+          description: Identity document file (JPG, PNG, or PDF up to 10MB)
+        phone:
+          type: string
+          example: "+984799123456"
+        document_type:
+          type: string
+          enum: [passport, national_id, driver_license]
+          example: "passport"
+        verification_token:
+          type: string
+          description: Verification token from OTP process
+
+    KycReportResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "SUCCESS"
+        report_id:
+          type: string
+          example: "REP-TU5G-984721"
+        message:
+          type: string
+          example: "KYC verification report recorded"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-08-14T19:25:00Z"
+
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+          example: "OK"
+        service:
+          type: string
+          example: "TU5G Gateway"
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+        services:
+          type: object
+          additionalProperties:
+            type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          example: 400
+        error:
+          type: string
+          example: "Bad Request"
+        message:
+          type: string
+          example: "Invalid phone format"
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    BadRequest:
+      description: Invalid request parameters or payload
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 400
+            error: "Bad Request"
+            message: "Phone number parameter is missing or invalid"
+            timestamp: "2026-08-14T19:25:00Z"
+
+    Unauthorized:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 401
+            error: "Unauthorized"
+            message: "Authentication token invalid or expired"
+            timestamp: "2026-08-14T19:25:00Z"
+
+    TooManyRequests:
+      description: Rate limit exceeded (HAABS Security Enforcement)
+      headers:
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+          description: Rate limit window ceiling
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+          description: Remaining requests in window
+        Retry-After:
+          schema:
+            type: integer
+          description: Seconds to wait before retry
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 429
+            error: "Too Many Requests"
+            message: "Rate limit exceeded. Please retry after 60 seconds."
+            timestamp: "2026-08-14T19:25:00Z"
+
+    InternalServerError:
+      description: Internal Gateway server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            code: 500
+            error: "Internal Server Error"
+            message: "An error occurred while processing the request"
+            timestamp: "2026-08-14T19:25:00Z"

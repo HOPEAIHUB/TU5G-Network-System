@@ -1,0 +1,17 @@
+[project]
+name = "qsac"
+version = "1.0.0"
+description = "QSAC — Quantum-ready crypto & storage service for TUGS gateway"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "cryptography>=41.0.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.24.0"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"

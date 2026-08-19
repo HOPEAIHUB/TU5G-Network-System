@@ -1,0 +1,739 @@
+{% extends "base.html" %} {% block title %}Holographic Sessions - TU5G Network
+Control Center{% endblock %} {% block extra_head %}
+<style>
+  /* Holographic special layout styles */
+  .holo-viewport-container {
+    position: relative;
+    background-color: #0b0f19;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+    height: 480px;
+    box-shadow: 0 0 30px rgba(75, 192, 192, 0.15);
+  }
+
+  .holo-viewport-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    pointer-events: none;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.5rem;
+  }
+
+  .holo-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 30px 30px;
+    background-image:
+      linear-gradient(to right, rgba(75, 192, 192, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(75, 192, 192, 0.05) 1px, transparent 1px);
+    z-index: 1;
+  }
+
+  .holo-scanlines {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      rgba(18, 16, 16, 0) 50%,
+      rgba(0, 0, 0, 0.25) 50%
+    );
+    background-size: 100% 4px;
+    z-index: 2;
+    opacity: 0.4;
+  }
+
+  .holo-stream-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    position: relative;
+    z-index: 3;
+    transform: scaleX(-1); /* Mirror view for camera */
+    filter: hue-rotate(120deg) saturate(1.5) contrast(1.2); /* Hologram blue/cyan filter */
+    display: none;
+  }
+
+  .holo-static-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle, #101a2d 0%, #060912 100%);
+    z-index: 4;
+    transition: opacity 0.5s ease;
+  }
+
+  /* Scan animation */
+  @keyframes scanline-anim {
+    0% {
+      transform: translateY(-100%);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+  .holo-laser-line {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: rgba(75, 192, 192, 0.8);
+    box-shadow: 0 0 15px rgba(75, 192, 192, 0.8);
+    z-index: 5;
+    animation: scanline-anim 6s linear infinite;
+    display: none;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container-fluid px-4">
+  <!-- Page Header -->
+  <div
+    class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-3"
+  >
+    <div>
+      <h1 class="h3 fw-bold text-light mb-1">Holographic Sessions Manager</h1>
+      <p class="text-secondary m-0">
+        Initialize and manage WebRTC-based ultra-low latency interactive 3D
+        holographic streams.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <span
+        id="sessionStatusBadge"
+        class="badge bg-secondary border border-secondary-subtle py-2 px-3 d-flex align-items-center gap-1.5 fs-7"
+      >
+        <i class="bi bi-circle-fill text-muted me-1 fs-9"></i> INACTIVE
+      </span>
+    </div>
+  </div>
+
+  <!-- Main Workspace Row -->
+  <div class="row g-4">
+    <!-- Holographic Viewport & Controls (Left Column) -->
+    <div class="col-12 col-lg-8">
+      <div
+        class="card border border-secondary-subtle bg-dark-card shadow-sm mb-4"
+      >
+        <div class="card-body p-3">
+          <!-- Holographic Viewport -->
+          <div class="holo-viewport-container mb-3">
+            <!-- Holographic Effects Overlays -->
+            <div class="holo-grid"></div>
+            <div class="holo-scanlines"></div>
+            <div class="holo-laser-line" id="holoLaser"></div>
+
+            <!-- HUD Overlay -->
+            <div class="holo-viewport-overlay">
+              <!-- Top HUD -->
+              <div class="d-flex justify-content-between align-items-start">
+                <div
+                  class="bg-dark bg-opacity-75 border border-secondary-subtle rounded py-1 px-2.5 fs-8 text-light font-monospace"
+                >
+                  <span class="text-info fw-bold">TU5G-HOLO-RX</span><br />
+                  <span id="hudResolution">RES: ---</span>
+                </div>
+                <div
+                  class="bg-dark bg-opacity-75 border border-secondary-subtle rounded py-1 px-2.5 fs-8 text-light text-end font-monospace"
+                >
+                  <span class="text-success fw-bold"
+                    ><i class="bi bi-broadcast"></i> BITRATE</span
+                  ><br />
+                  <span id="hudBitrate">0.00 Mbps</span>
+                </div>
+              </div>
+
+              <!-- Bottom HUD -->
+              <div class="d-flex justify-content-between align-items-end">
+                <div
+                  class="bg-dark bg-opacity-75 border border-secondary-subtle rounded py-1 px-2.5 fs-8 text-light font-monospace"
+                >
+                  <span class="text-danger fw-bold"
+                    ><i class="bi bi-record-fill text-danger"></i> REC
+                    TIME</span
+                  ><br />
+                  <span id="hudDuration">00:00:00</span>
+                </div>
+                <div
+                  class="bg-dark bg-opacity-75 border border-secondary-subtle rounded py-1 px-2.5 fs-8 text-light text-end font-monospace"
+                >
+                  <span class="text-warning fw-bold">LATENCY</span><br />
+                  <span id="hudLatency">--- ms</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real Video Stream -->
+            <video
+              id="holoVideo"
+              class="holo-stream-video"
+              autoplay
+              playsinline
+              muted
+            ></video>
+
+            <!-- Static / Idle Placeholder -->
+            <div id="holoPlaceholder" class="holo-static-placeholder">
+              <i class="bi bi-projector text-secondary mb-3 display-3"></i>
+              <h4 class="text-light fw-bold">Holographic Projection Idle</h4>
+              <p class="text-secondary fs-7 text-center px-4 max-w-400">
+                Initialize a WebRTC stream connection to project live 3D video
+                telemetry onto the network workspace.
+              </p>
+              <button
+                id="btnQuickStart"
+                class="btn btn-info btn-sm fw-bold text-dark px-4 py-2 mt-2"
+              >
+                <i class="bi bi-play-circle-fill me-1"></i> Quick Connect WebRTC
+              </button>
+            </div>
+          </div>
+
+          <!-- Interactive Projection Stream Controls -->
+          <div class="bg-dark-input rounded p-3 border border-secondary-subtle">
+            <div class="row align-items-center g-3">
+              <!-- Trigger Actions -->
+              <div class="col-12 col-md-6 d-flex gap-2">
+                <button
+                  id="btnStartHolo"
+                  class="btn btn-success fw-bold flex-fill py-2 d-flex align-items-center justify-content-center gap-1.5"
+                >
+                  <i class="bi bi-play-fill fs-5"></i> Start Stream
+                </button>
+                <button
+                  id="btnStopHolo"
+                  class="btn btn-danger fw-bold flex-fill py-2 d-flex align-items-center justify-content-center gap-1.5"
+                  disabled
+                >
+                  <i class="bi bi-stop-fill fs-5"></i> End Session
+                </button>
+              </div>
+
+              <!-- Hardware Toggles -->
+              <div class="col-12 col-md-6 d-flex justify-content-md-end gap-2">
+                <button
+                  id="btnToggleMute"
+                  class="btn btn-outline-secondary py-2 px-3"
+                  title="Mute Audio"
+                  disabled
+                >
+                  <i class="bi bi-mic-fill" id="muteIcon"></i>
+                </button>
+                <button
+                  id="btnToggleCamera"
+                  class="btn btn-outline-secondary py-2 px-3"
+                  title="Toggle Camera Source"
+                  disabled
+                >
+                  <i class="bi bi-camera-video-fill" id="cameraIcon"></i>
+                </button>
+                <button
+                  id="btnToggleRecord"
+                  class="btn btn-outline-secondary py-2 px-3"
+                  title="Capture Stream Snapshot"
+                  disabled
+                >
+                  <i class="bi bi-camera-fill"></i>
+                </button>
+                <button
+                  id="btnHoloSettings"
+                  class="btn btn-outline-secondary py-2 px-3"
+                  title="Hologram Adjustments"
+                >
+                  <i class="bi bi-sliders2"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Expanded Controls Slider Block (Collapsible) -->
+            <div
+              class="collapse mt-3 pt-3 border-top border-secondary-subtle"
+              id="hologramSliders"
+            >
+              <div class="row g-3">
+                <div class="col-12 col-md-4">
+                  <label class="form-label fs-8 text-secondary font-monospace"
+                    >HUE SHIFT (CHROMA KEY)</label
+                  >
+                  <input
+                    type="range"
+                    class="form-range"
+                    id="sliderHue"
+                    min="0"
+                    max="360"
+                    value="120"
+                  />
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fs-8 text-secondary font-monospace"
+                    >SATURATION FREQUENCY</label
+                  >
+                  <input
+                    type="range"
+                    class="form-range"
+                    id="sliderSaturate"
+                    min="50"
+                    max="300"
+                    value="150"
+                  />
+                </div>
+                <div class="col-12 col-md-4">
+                  <label class="form-label fs-8 text-secondary font-monospace"
+                    >CONTRAST DEPTH</label
+                  >
+                  <input
+                    type="range"
+                    class="form-range"
+                    id="sliderContrast"
+                    min="50"
+                    max="200"
+                    value="120"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Status & Listing (Right Column) -->
+    <div class="col-12 col-lg-4">
+      <!-- Quick Connect Parameters Card -->
+      <div
+        class="card border border-secondary-subtle bg-dark-card shadow-sm mb-4"
+      >
+        <div
+          class="card-header border-bottom border-secondary-subtle bg-transparent py-3"
+        >
+          <h5 class="m-0 fw-bold text-light d-flex align-items-center">
+            <i class="bi bi-hdd-network text-info me-2"></i> Session
+            Configuration
+          </h5>
+        </div>
+        <div class="card-body p-4">
+          <form id="holoConfigForm">
+            <div class="mb-3">
+              <label class="form-label text-secondary fs-7"
+                >Session Target URL</label
+              >
+              <input
+                type="text"
+                class="form-control border-secondary-subtle bg-dark-input text-light fs-7"
+                id="holoServerUrl"
+                value="wss://holo-rtc.tu5g.net/v1"
+                placeholder="wss://..."
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-secondary fs-7"
+                >Hologram Encoding Codec</label
+              >
+              <select
+                class="form-select border-secondary-subtle bg-dark-input text-light fs-7"
+                id="holoCodec"
+              >
+                <option value="H264" selected>
+                  H.264 (Low Latency Profiler)
+                </option>
+                <option value="VP8">VP8 (Web standard)</option>
+                <option value="VP9">VP9 (High Quality 3D Mesh)</option>
+                <option value="AV1">AV1 (Next-Gen Compression)</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label text-secondary fs-7"
+                >Bitrate Target Cap</label
+              >
+              <select
+                class="form-select border-secondary-subtle bg-dark-input text-light fs-7"
+                id="holoBitrate"
+              >
+                <option value="4000">4.0 Mbps (Standard 3D)</option>
+                <option value="8000" selected>8.0 Mbps (Dense Mesh HD)</option>
+                <option value="15000">
+                  15.0 Mbps (Ultra Dense volumetric 4K)
+                </option>
+              </select>
+            </div>
+            <div class="form-check form-switch mb-1">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                role="switch"
+                id="checkHoloEnhance"
+                checked
+              />
+              <label
+                class="form-check-label text-secondary fs-7"
+                for="checkHoloEnhance"
+                >Enable AI Volumetric Enhancement</label
+              >
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Active Sessions List -->
+      <div class="card border border-secondary-subtle bg-dark-card shadow-sm">
+        <div
+          class="card-header border-bottom border-secondary-subtle bg-transparent py-3 d-flex justify-content-between align-items-center"
+        >
+          <h5 class="m-0 fw-bold text-light d-flex align-items-center">
+            <i class="bi bi-list-stars text-info me-2"></i> Active Network
+            Sessions
+          </h5>
+          <span
+            id="activeSessionsCount"
+            class="badge bg-dark border border-secondary-subtle text-info"
+            >2 Active</span
+          >
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush" id="holoSessionsList">
+            <!-- Session 1 -->
+            <div
+              class="list-group-item bg-transparent border-bottom border-secondary-subtle p-3 text-light"
+            >
+              <div
+                class="d-flex justify-content-between align-items-start mb-2"
+              >
+                <div>
+                  <h6 class="mb-1 text-light fw-bold fs-7">TX-HOLO-DENSE-09</h6>
+                  <p class="text-secondary mb-0 fs-8">
+                    <i class="bi bi-geo-alt-fill text-info"></i> Virtual Cell-01
+                    (MNC 01)
+                  </p>
+                </div>
+                <span
+                  class="badge bg-success-subtle text-success border border-success-subtle fs-9"
+                  >STREAMING</span
+                >
+              </div>
+              <div class="row g-2 text-secondary font-monospace fs-8">
+                <div class="col-6"><i class="bi bi-cpu"></i> H.264 / HD</div>
+                <div class="col-6 text-end">
+                  <i class="bi bi-arrow-down"></i> 6.82 Mbps
+                </div>
+                <div class="col-12">
+                  <i class="bi bi-clock"></i> Duration: 01:24:12
+                </div>
+              </div>
+            </div>
+
+            <!-- Session 2 -->
+            <div
+              class="list-group-item bg-transparent border-bottom border-secondary-subtle p-3 text-light"
+            >
+              <div
+                class="d-flex justify-content-between align-items-start mb-2"
+              >
+                <div>
+                  <h6 class="mb-1 text-light fw-bold fs-7">TX-HOLO-MESH-41</h6>
+                  <p class="text-secondary mb-0 fs-8">
+                    <i class="bi bi-geo-alt-fill text-info"></i> Virtual Cell-02
+                    (MNC 01)
+                  </p>
+                </div>
+                <span
+                  class="badge bg-success-subtle text-success border border-success-subtle fs-9"
+                  >STREAMING</span
+                >
+              </div>
+              <div class="row g-2 text-secondary font-monospace fs-8">
+                <div class="col-6"><i class="bi bi-cpu"></i> VP9 / Mesh</div>
+                <div class="col-6 text-end">
+                  <i class="bi bi-arrow-down"></i> 11.45 Mbps
+                </div>
+                <div class="col-12">
+                  <i class="bi bi-clock"></i> Duration: 00:15:38
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<!-- Page-specific WebRTC emulation scripts and interactivity -->
+<script>
+  const ACTIVE_PAGE = "holo";
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnStart = document.getElementById("btnStartHolo");
+    const btnStop = document.getElementById("btnStopHolo");
+    const btnQuickStart = document.getElementById("btnQuickStart");
+    const btnToggleMute = document.getElementById("btnToggleMute");
+    const btnToggleCamera = document.getElementById("btnToggleCamera");
+    const btnToggleRecord = document.getElementById("btnToggleRecord");
+    const btnHoloSettings = document.getElementById("btnHoloSettings");
+    const listSliders = document.getElementById("hologramSliders");
+
+    const video = document.getElementById("holoVideo");
+    const placeholder = document.getElementById("holoPlaceholder");
+    const badge = document.getElementById("sessionStatusBadge");
+    const laser = document.getElementById("holoLaser");
+
+    // HUD displays
+    const hudResolution = document.getElementById("hudResolution");
+    const hudBitrate = document.getElementById("hudBitrate");
+    const hudDuration = document.getElementById("hudDuration");
+    const hudLatency = document.getElementById("hudLatency");
+
+    // Sliders
+    const sliderHue = document.getElementById("sliderHue");
+    const sliderSaturate = document.getElementById("sliderSaturate");
+    const sliderContrast = document.getElementById("sliderContrast");
+
+    let localStream = null;
+    let timerInterval = null;
+    let bitrateInterval = null;
+    let startTime = null;
+
+    // Sliders reveal toggle
+    btnHoloSettings.addEventListener("click", () => {
+      const bsCollapse = new bootstrap.Collapse(listSliders, {
+        toggle: true,
+      });
+    });
+
+    // WebRTC controls binding
+    sliderHue.addEventListener("input", updateVideoFilters);
+    sliderSaturate.addEventListener("input", updateVideoFilters);
+    sliderContrast.addEventListener("input", updateVideoFilters);
+
+    function updateVideoFilters() {
+      const h = sliderHue.value;
+      const s = sliderSaturate.value;
+      const c = sliderContrast.value;
+      video.style.filter = `hue-rotate(${h}deg) saturate(${s}%) contrast(${c}%)`;
+    }
+
+    async function startSession() {
+      try {
+        badge.className =
+          "badge bg-warning border border-warning-subtle py-2 px-3 d-flex align-items-center gap-1.5 fs-7";
+        badge.innerHTML = `<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> INITIALIZING`;
+
+        // Try grabbing user webcam
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720 },
+          audio: true,
+        });
+
+        video.srcObject = localStream;
+        video.style.display = "block";
+        placeholder.style.display = "none";
+        laser.style.display = "block";
+
+        // Toggle Button Statuses
+        btnStart.disabled = true;
+        btnStop.disabled = false;
+        btnToggleMute.disabled = false;
+        btnToggleCamera.disabled = false;
+        btnToggleRecord.disabled = false;
+        if (btnQuickStart) btnQuickStart.disabled = true;
+
+        // Badge streaming
+        badge.className =
+          "badge bg-success border border-success-subtle py-2 px-3 d-flex align-items-center gap-1.5 fs-7";
+        badge.innerHTML = `<span class="spinner-grow spinner-grow-sm me-1" role="status" aria-hidden="true"></span> ACTIVE PROJECTION`;
+
+        // Show notification via system
+        if (window.TU5G_Notifications) {
+          window.TU5G_Notifications.success(
+            "Holographic WebRTC stream connected successfully.",
+          );
+        }
+
+        // HUD displays init
+        hudResolution.textContent = "RES: 1280x720 @60FPS";
+        hudLatency.textContent = Math.floor(Math.random() * 8 + 4) + " ms";
+
+        // Start Timers
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+          const elapsed = Date.now() - startTime;
+          const hrs = Math.floor(elapsed / 3600000)
+            .toString()
+            .padStart(2, "0");
+          const mins = Math.floor((elapsed % 3600000) / 60000)
+            .toString()
+            .padStart(2, "0");
+          const secs = Math.floor((elapsed % 60000) / 1000)
+            .toString()
+            .padStart(2, "0");
+          hudDuration.textContent = `${hrs}:${mins}:${secs}`;
+        }, 1000);
+
+        bitrateInterval = setInterval(() => {
+          const randomBitrate = (Math.random() * 3 + 6.5).toFixed(2);
+          hudBitrate.textContent = `${randomBitrate} Mbps`;
+          hudLatency.textContent = Math.floor(Math.random() * 6 + 3) + " ms";
+        }, 2000);
+      } catch (err) {
+        console.error("WebRTC Error: ", err);
+        badge.className =
+          "badge bg-danger border border-danger-subtle py-2 px-3 fs-7";
+        badge.innerHTML = `<i class="bi bi-x-circle-fill me-1"></i> CONNECT FAILED`;
+
+        if (window.TU5G_Notifications) {
+          window.TU5G_Notifications.danger(
+            "Failed to capture local camera/mic. Using fallback emulator.",
+          );
+        }
+
+        // Emulator Fallback if camera is blocked/unavailable
+        startEmulator();
+      }
+    }
+
+    function startEmulator() {
+      // Emulate active connection without real webcam
+      video.srcObject = null;
+      video.style.display = "block";
+      video.poster =
+        "https://images.unsplash.com/photo-1507679799987-c73779587ccf?auto=format&fit=crop&w=800&q=80"; // neat placeholder
+      placeholder.style.display = "none";
+      laser.style.display = "block";
+
+      btnStart.disabled = true;
+      btnStop.disabled = false;
+      btnToggleMute.disabled = true;
+      btnToggleCamera.disabled = true;
+      btnToggleRecord.disabled = false;
+
+      badge.className =
+        "badge bg-warning border border-warning-subtle py-2 px-3 d-flex align-items-center gap-1.5 fs-7";
+      badge.innerHTML = `<span class="spinner-grow spinner-grow-sm me-1 text-dark" role="status" aria-hidden="true"></span> EMULATED STREAM`;
+
+      hudResolution.textContent = "RES: 1920x1080 (3D Cloud)";
+      hudLatency.textContent = "14 ms";
+
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const elapsed = Date.now() - startTime;
+        const hrs = Math.floor(elapsed / 3600000)
+          .toString()
+          .padStart(2, "0");
+        const mins = Math.floor((elapsed % 3600000) / 60000)
+          .toString()
+          .padStart(2, "0");
+        const secs = Math.floor((elapsed % 60000) / 1000)
+          .toString()
+          .padStart(2, "0");
+        hudDuration.textContent = `${hrs}:${mins}:${secs}`;
+      }, 1000);
+
+      bitrateInterval = setInterval(() => {
+        const randomBitrate = (Math.random() * 2 + 8.5).toFixed(2);
+        hudBitrate.textContent = `${randomBitrate} Mbps`;
+        hudLatency.textContent = Math.floor(Math.random() * 4 + 12) + " ms";
+      }, 2000);
+    }
+
+    function stopSession() {
+      if (localStream) {
+        localStream.getTracks().forEach((track) => track.stop());
+        localStream = null;
+      }
+
+      video.srcObject = null;
+      video.style.display = "none";
+      placeholder.style.display = "flex";
+      laser.style.display = "none";
+
+      clearInterval(timerInterval);
+      clearInterval(bitrateInterval);
+
+      btnStart.disabled = false;
+      btnStop.disabled = true;
+      btnToggleMute.disabled = true;
+      btnToggleCamera.disabled = true;
+      btnToggleRecord.disabled = true;
+      if (btnQuickStart) btnQuickStart.disabled = false;
+
+      hudResolution.textContent = "RES: ---";
+      hudBitrate.textContent = "0.00 Mbps";
+      hudDuration.textContent = "00:00:00";
+      hudLatency.textContent = "--- ms";
+
+      badge.className =
+        "badge bg-secondary border border-secondary-subtle py-2 px-3 fs-7";
+      badge.innerHTML = `<i class="bi bi-circle-fill text-muted me-1 fs-9"></i> INACTIVE`;
+
+      if (window.TU5G_Notifications) {
+        window.TU5G_Notifications.info("Holographic stream closed.");
+      }
+    }
+
+    btnStart.addEventListener("click", startSession);
+    btnStop.addEventListener("click", stopSession);
+    if (btnQuickStart) btnQuickStart.addEventListener("click", startSession);
+
+    // Mute / Cam Toggles
+    let audioEnabled = true;
+    let videoEnabled = true;
+
+    btnToggleMute.addEventListener("click", () => {
+      if (localStream) {
+        audioEnabled = !audioEnabled;
+        localStream
+          .getAudioTracks()
+          .forEach((track) => (track.enabled = audioEnabled));
+
+        const icon = document.getElementById("muteIcon");
+        if (audioEnabled) {
+          icon.className = "bi bi-mic-fill";
+          btnToggleMute.className = "btn btn-outline-secondary py-2 px-3";
+        } else {
+          icon.className = "bi bi-mic-mute-fill";
+          btnToggleMute.className = "btn btn-danger py-2 px-3";
+        }
+      }
+    });
+
+    btnToggleCamera.addEventListener("click", () => {
+      if (localStream) {
+        videoEnabled = !videoEnabled;
+        localStream
+          .getVideoTracks()
+          .forEach((track) => (track.enabled = videoEnabled));
+
+        const icon = document.getElementById("cameraIcon");
+        if (videoEnabled) {
+          icon.className = "bi bi-camera-video-fill";
+          btnToggleCamera.className = "btn btn-outline-secondary py-2 px-3";
+        } else {
+          icon.className = "bi bi-camera-video-off-fill";
+          btnToggleCamera.className = "btn btn-danger py-2 px-3";
+        }
+      }
+    });
+
+    btnToggleRecord.addEventListener("click", () => {
+      if (window.TU5G_Notifications) {
+        window.TU5G_Notifications.success(
+          "Volumetric cloud snapshot captured and saved to secure storage.",
+        );
+      }
+    });
+  });
+</script>
+{% endblock %}

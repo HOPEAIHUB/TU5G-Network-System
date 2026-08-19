@@ -1,0 +1,41 @@
+{
+  "properties": {
+    "email": {
+      "type": "string"
+    },
+    "emailVerified": {
+      "type": "boolean"
+    },
+    "fullName": {
+      "type": "string"
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "kycStatus": {
+      "enum": [
+        "pending",
+        "verified",
+        "rejected"
+      ],
+      "type": "string"
+    },
+    "phoneNumber": {
+      "type": "string"
+    },
+    "phoneVerified": {
+      "type": "boolean"
+    },
+    "role": {
+      "enum": [
+        "user",
+        "admin",
+        "super_admin"
+      ],
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "TU5GUser"
+}

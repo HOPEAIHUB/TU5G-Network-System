@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package qsac;
+
+service QsacService {
+  rpc EncryptAndStore (EncryptAndStoreRequest) returns (EncryptAndStoreResponse);
+}
+
+message EncryptAndStoreRequest {
+  string filename = 1;
+  bytes content = 2;
+  string mime_type = 3;
+}
+
+message EncryptAndStoreResponse {
+  string status = 1;
+  string receipt_id = 2;
+}

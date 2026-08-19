@@ -1,0 +1,44 @@
+{
+  "properties": {
+    "amount": {
+      "type": "number"
+    },
+    "currency": {
+      "default": "USD",
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "pending",
+        "completed",
+        "failed",
+        "refunded"
+      ],
+      "type": "string"
+    },
+    "transactionType": {
+      "enum": [
+        "add_funds",
+        "payment",
+        "transfer",
+        "refund"
+      ],
+      "type": "string"
+    },
+    "userId": {
+      "type": "string"
+    },
+    "vpaFrom": {
+      "type": "string"
+    },
+    "vpaTo": {
+      "type": "string"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "PaymentTransaction"
+}

@@ -1,0 +1,33 @@
+{
+  "properties": {
+    "cellId": {
+      "type": "string"
+    },
+    "isActive": {
+      "type": "boolean"
+    },
+    "mcc": {
+      "default": 984,
+      "type": "integer"
+    },
+    "mnc": {
+      "default": 79,
+      "type": "integer"
+    },
+    "rsrp": {
+      "default": -50,
+      "type": "integer"
+    },
+    "rtt": {
+      "default": 20,
+      "type": "integer"
+    },
+    "users": {
+      "default": 0,
+      "type": "integer"
+    }
+  },
+  "type": "object",
+  "required": [],
+  "name": "VirtualCell"
+}

@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+
+{% block title %}AI Governance — TU5G{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-blue: #0066ff;
+        --accent-gold: #ffb800;
+        --dark-bg: #0a0e27;
+        --surface: #141b3b;
+        --surface-hover: #1e2652;
+        --text-light: #ffffff;
+        --text-muted: #8b94cc;
+        --color-border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Hero section */
+    .gov-hero {
+        background: linear-gradient(135deg, rgba(20, 27, 59, 0.8) 0%, rgba(10, 14, 39, 0.9) 100%);
+        border: 1px solid var(--color-border);
+        border-radius: 20px;
+        padding: 4rem 2rem;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 3rem;
+    }
+
+    .gov-hero::before {
+        content: '';
+        position: absolute;
+        width: 300px;
+        height: 300px;
+        background: radial-gradient(circle, rgba(255, 184, 0, 0.1) 0%, transparent 70%);
+        top: -100px;
+        right: -100px;
+        border-radius: 50%;
+    }
+
+    /* Category Cards */
+    .gov-card {
+        background: rgba(20, 27, 59, 0.5);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        padding: 2.25rem;
+        height: 100%;
+        transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .gov-card:hover {
+        transform: translateY(-5px);
+        background: rgba(20, 27, 59, 0.8);
+        border-color: rgba(255, 184, 0, 0.3);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    }
+
+    .gov-icon-box {
+        width: 54px;
+        height: 54px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        margin-bottom: 1.5rem;
+        background: rgba(255, 184, 0, 0.1);
+        color: var(--accent-gold);
+        border: 1px solid rgba(255, 184, 0, 0.2);
+    }
+
+    .benefit-item {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .benefit-item i {
+        color: var(--accent-gold);
+    }
+
+    /* Modal Styling */
+    .modal-content-custom-gov {
+        background-color: #0f1430 !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 18px !important;
+    }
+
+    /* Testimonials */
+    .testi-card {
+        background: rgba(10, 14, 39, 0.4);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: 100%;
+    }
+
+    /* Stats display */
+    .gov-stat-card {
+        background: rgba(10, 14, 39, 0.6);
+        border: 1px solid var(--color-border);
+        border-radius: 14px;
+        padding: 1.5rem;
+        text-align: center;
+    }
+
+    .checker-box {
+        background: rgba(10, 14, 39, 0.7);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        padding: 2rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    
+    <!-- Hero Header -->
+    <div class="gov-hero text-center text-lg-start">
+        <div class="row align-items-center g-4">
+            <div class="col-lg-8">
+                <span class="badge bg-warning text-dark px-3 py-2 fs-8 font-monospace tracking-wider uppercase mb-3">Sovereign Community Program</span>
+                <h1 class="display-5 fw-bold text-white mb-3">Democratic AI Governance</h1>
+                <p class="text-secondary leading-relaxed mb-0 fs-6">
+                    TU5G is committed to global decentralized connectivity access. Under our AI Governance Charter, we support civil developers, student researchers, nonprofit charities, and religious communities with free premium-tier eSIM allocations, priority telemetry routes, and secure hypermail protocols.
+                </p>
+            </div>
+            <div class="col-lg-4 text-center">
+                <i class="bi bi-bank text-accent-gold display-1 d-block opacity-75"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- GLOBAL STATS ROW -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="gov-stat-card">
+                <span class="text-secondary fs-8 uppercase d-block mb-1">Total Grant Submissions</span>
+                <h2 class="fw-bold text-white font-monospace mb-0" id="govStatTotal">1,402</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="gov-stat-card">
+                <span class="text-secondary fs-8 uppercase d-block mb-1">Approved Free Nodes</span>
+                <h2 class="fw-bold text-success font-monospace mb-0" id="govStatApproved">1,124</h2>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="gov-stat-card">
+                <span class="text-secondary fs-8 uppercase d-block mb-1">Pending Evaluation</span>
+                <h2 class="fw-bold text-warning font-monospace mb-0" id="govStatPending">42</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- CATEGORIES SECTION -->
+    <div class="mb-5">
+        <div class="text-center mb-5">
+            <h3 class="fw-bold text-white">Sovereign Program Tracks</h3>
+            <p class="text-secondary fs-7">Choose the specific charter category that describes your mission.</p>
+        </div>
+
+        <div class="row g-4">
+            
+            <!-- Category 1: AI Governance -->
+            <div class="col-md-6 col-lg-4">
+                <div class="gov-card">
+                    <div>
+                        <div class="gov-icon-box"><i class="bi bi-cpu"></i></div>
+                        <h4 class="fw-bold text-white mb-2">AI Governance</h4>
+                        <p class="text-muted fs-8 mb-4">Supporting decentralized compliance networks, automated telecom policy agents, and open-source compliance models.</p>
+                        
+                        <div class="mb-4">
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Free Premium Node Routing</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> SLA uptime priority (99.9%)</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Developer sandbox credentials</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-warning w-100 py-2.5 apply-btn" data-category="AI Governance">Apply Track &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Category 2: Community Developers -->
+            <div class="col-md-6 col-lg-4">
+                <div class="gov-card">
+                    <div>
+                        <div class="gov-icon-box"><i class="bi bi-code-slash"></i></div>
+                        <h4 class="fw-bold text-white mb-2">Community Devs</h4>
+                        <p class="text-muted fs-8 mb-4">Dedicated to mesh networks, open GSM nodes, and third-party software integrations built on top of TU5G APIs.</p>
+                        
+                        <div class="mb-4">
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Vanity Number allocation</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Full REST API endpoint access</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Priority beta program seats</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-warning w-100 py-2.5 apply-btn" data-category="Community Developers">Apply Track &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Category 3: Students -->
+            <div class="col-md-6 col-lg-4">
+                <div class="gov-card">
+                    <div>
+                        <div class="gov-icon-box"><i class="bi bi-mortarboard"></i></div>
+                        <h4 class="fw-bold text-white mb-2">Students & Research</h4>
+                        <p class="text-muted fs-8 mb-4">Aids academic research on high-bandwidth transmission, spatial holography, and global routing protocols.</p>
+                        
+                        <div class="mb-4">
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Free Unlimited data eSIM</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> High-Performance computing quota</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Direct mentorship sessions</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-warning w-100 py-2.5 apply-btn" data-category="Students & Research">Apply Track &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Category 4: Charities -->
+            <div class="col-md-6 col-lg-6">
+                <div class="gov-card">
+                    <div>
+                        <div class="gov-icon-box"><i class="bi bi-globe-americas"></i></div>
+                        <h4 class="fw-bold text-white mb-2">Verified Charities / NGOs</h4>
+                        <p class="text-muted fs-8 mb-4">Supplying emergency telecommunications networks to disaster relief responders, medical teams, and public service NGOs worldwide.</p>
+                        
+                        <div class="mb-4">
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Up to 10 complimentary eSIM cards</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Isolated HMAIL server domains</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> 24/7 dedicated support priority</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-warning w-100 py-2.5 apply-btn" data-category="Charities / NGOs">Apply Track &rarr;</button>
+                </div>
+            </div>
+
+            <!-- Category 5: Religious Organizations -->
+            <div class="col-md-6 col-lg-6">
+                <div class="gov-card">
+                    <div>
+                        <div class="gov-icon-box"><i class="bi bi-calendar2-heart"></i></div>
+                        <h4 class="fw-bold text-white mb-2">Religious Organizations</h4>
+                        <p class="text-muted fs-8 mb-4">Enabling religious networks, safe community communications, and decentralized charitable group coordinates.</p>
+                        
+                        <div class="mb-4">
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Dedicated Free Premium Numbers</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Secure group transmission hubs</div>
+                            <div class="benefit-item"><i class="bi bi-patch-check"></i> Encrypted archive storage quota</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-outline-warning w-100 py-2.5 apply-btn" data-category="Religious Organizations">Apply Track &rarr;</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- INTERACTIVE STATUS CHECKER -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-8">
+            <div class="checker-box border-secondary-subtle">
+                <h4 class="fw-bold text-white mb-2"><i class="bi bi-clipboard-check text-accent-gold me-2"></i>Sovereign Application Tracker</h4>
+                <p class="text-muted fs-8 mb-4">Enter your transmitted application reference packet token to evaluate its live routing status.</p>
+                
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-dark border-secondary-subtle text-accent-gold font-monospace">GOV-</span>
+                    <input type="text" class="form-control bg-dark border-secondary-subtle font-monospace text-light" id="trackInput" placeholder="9012" maxlength="5">
+                    <button class="btn btn-warning text-dark fw-bold" id="btnTrack">TRACK PACKET</button>
+                </div>
+
+                <div id="trackResult" class="p-3 bg-dark rounded border border-secondary-subtle d-none">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-secondary fs-9 uppercase d-block mb-1">Target Application</span>
+                            <strong class="text-white font-monospace" id="trackTargetName">GOV-9012</strong>
+                        </div>
+                        <span class="badge bg-warning text-dark" id="trackStatusBadge">EVALUATING</span>
+                    </div>
+                    <div class="border-top border-secondary-subtle mt-3 pt-2">
+                        <p class="text-secondary fs-9 mb-0" id="trackStatusDesc">Automated AI compliance validators are currently evaluating organization credentials.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMMUNITY TESTIMONIALS SECTION -->
+    <div class="mb-4">
+        <div class="text-center mb-4">
+            <h4 class="fw-bold text-white">Recipient Testimonials</h4>
+            <p class="text-secondary fs-8">How sovereign communities utilize virtual cellular lines.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-6">
+                <div class="testi-card">
+                    <p class="text-muted fs-8 italic mb-3">"We received 5 complimentary Ultra-tier eSIM profiles from the TU5G AI Governance program. This allowed our medical responder team in the field to coordinate emergency relief data without standard carrier network congestion."</p>
+                    <strong class="text-white fs-8 d-block">— Dr. Sarah Jenkins, Rescue NGO</strong>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="testi-card">
+                    <p class="text-muted fs-8 italic mb-3">"Built a localized API wrapper for mesh communication routing as a student developer using the TU5G sandbox credentials. The program track provided direct node allocations that bypassed commercial paywalls."</p>
+                    <strong class="text-white fs-8 d-block">— Leo Chen, CS Academic Researcher</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- APPLICATION SUBMISSION MODAL -->
+<div class="modal fade" id="applyModal" tabindex="-1" aria-labelledby="applyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content-custom-gov p-2">
+            
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold text-white" id="applyModalLabel"><i class="bi bi-bank text-accent-gold me-2"></i>Sovereign Access Application</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body p-4">
+                
+                <!-- STAGE 1: FORM -->
+                <form id="govForm" class="needs-validation" novalidate>
+                    
+                    <!-- Preselected Category -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Selected Charter Track</label>
+                        <select class="form-select bg-dark border-secondary-subtle text-white font-monospace" id="govCategory" required>
+                            <option value="AI Governance">AI Governance</option>
+                            <option value="Community Developers">Community Developers</option>
+                            <option value="Students & Research">Students & Research</option>
+                            <option value="Charities / NGOs">Charities / NGOs</option>
+                            <option value="Religious Organizations">Religious Organizations</option>
+                        </select>
+                    </div>
+
+                    <!-- Org Name -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Organization / Team Legal Name</label>
+                        <input type="text" class="form-control bg-dark border-secondary-subtle text-white" id="govOrgName" placeholder="e.g. Hope Alliance Medical Group" required>
+                        <div class="invalid-feedback">Organization or group name is required.</div>
+                    </div>
+
+                    <!-- Description Case -->
+                    <div class="mb-3">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Mission Case Justification (Use of cellular telemetry)</label>
+                        <textarea class="form-control bg-dark border-secondary-subtle text-white fs-8" id="govDesc" rows="4" placeholder="Briefly describe how complimentary eSIM numbers and priority routing will benefit your community mission..." required></textarea>
+                        <div class="invalid-feedback">Please enter a brief justification description.</div>
+                    </div>
+
+                    <!-- File Upload Proof -->
+                    <div class="mb-4">
+                        <label class="form-label text-secondary fs-8 uppercase fw-bold">Charter / Student ID / Proof Document Upload</label>
+                        <input type="file" class="form-control bg-dark border-secondary-subtle text-white" id="govFileProof" required>
+                        <div class="invalid-feedback">Please upload a valid proof document file.</div>
+                        <div class="form-text fs-9 text-muted">Upload organization registration PDF, charter document, or academic verification ID.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-warning w-100 py-3 fw-bold text-dark font-monospace" id="btnSubmitGovForm">
+                        <i class="bi bi-cloud-arrow-up-fill me-1"></i> DISPATCH GRANT APPLICATION
+                    </button>
+                </form>
+
+                <!-- STAGE 2: SUCCESS -->
+                <div id="govSuccessSection" class="d-none text-center py-4">
+                    <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle border border-success rounded-circle p-3 mb-3" style="width: 70px; height: 70px;">
+                        <i class="bi bi-check-circle-fill text-success fs-2"></i>
+                    </div>
+                    
+                    <h3 class="fw-bold text-white mb-1">Application Transmitted!</h3>
+                    <p class="text-secondary fs-7 mb-4">Your compliance packet is now queued for AI router evaluations.</p>
+
+                    <div class="p-4 bg-dark rounded border border-secondary-subtle max-width-500 mx-auto mb-4 text-start">
+                        <span class="text-secondary fs-9 uppercase d-block mb-1">Assigned Tracking Reference</span>
+                        <h4 class="font-monospace text-accent-gold fw-bold mb-3" id="assignedGovRef">GOV-9012</h4>
+                        <p class="text-muted fs-8 mb-0">Use this reference token inside the Application Tracker on this page to check compliance review status.</p>
+                    </div>
+
+                    <button type="button" class="btn btn-outline-light px-5" data-bs-dismiss="modal">
+                        Close & Track Status
+                    </button>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        let applyModal = new bootstrap.Modal(document.getElementById("applyModal"));
+        let mockTrackDB = {
+            "9012": { name: "GOV-9012 (Hope Alliance Medical)", status: "EVALUATING", desc: "Automated AI compliance validators are currently evaluating organization credentials." },
+            "9011": { name: "GOV-9011 (Lanka Research Mesh)", status: "APPROVED", desc: "Sovereign access grant approved. Complimentary SIM cards provisioned and emailed." }
+        };
+
+        // Select buttons clicks
+        document.querySelectorAll(".apply-btn").forEach(btn => {
+            btn.addEventListener("click", function() {
+                const category = this.dataset.category;
+                document.getElementById("govCategory").value = category;
+                
+                // Show form, hide success initially
+                document.getElementById("govForm").classList.remove("d-none");
+                document.getElementById("govSuccessSection").classList.add("d-none");
+
+                applyModal.show();
+            });
+        });
+
+        // Submit Grant application
+        document.getElementById("govForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const form = this;
+            if (!form.checkValidity()) {
+                form.classList.add("was-validated");
+                return;
+            }
+
+            const btn = document.getElementById("btnSubmitGovForm");
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> TRANSMITTING...';
+
+            const category = document.getElementById("govCategory").value;
+            const orgName = document.getElementById("govOrgName").value;
+            const desc = document.getElementById("govDesc").value;
+
+            fetch("/governance/apply", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    category_track: category,
+                    organization_name: orgName,
+                    justification: desc
+                })
+            })
+            .then(res => {
+                setTimeout(() => {
+                    const generatedRefNum = Math.floor(10000 + Math.random() * 90000);
+                    const refToken = "GOV-" + generatedRefNum;
+                    
+                    document.getElementById("assignedGovRef").textContent = refToken;
+                    
+                    // Add to local mock database for immediate checking
+                    mockTrackDB[generatedRefNum.toString()] = {
+                        name: refToken + ` (${orgName})`,
+                        status: "EVALUATING",
+                        desc: "New application transmission packets received. Node routing verification scheduled."
+                    };
+
+                    // Switch modal stages
+                    form.classList.add("d-none");
+                    document.getElementById("govSuccessSection").classList.remove("d-none");
+                    
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-cloud-arrow-up-fill me-1"></i> DISPATCH GRANT APPLICATION';
+                    form.reset();
+
+                    if (window.TU5G_Notifications) {
+                        TU5G_Notifications.success("Governance compliance request transmitted successfully.");
+                    }
+                }, 1500);
+            });
+        });
+
+        // Track packet status
+        document.getElementById("btnTrack").addEventListener("click", function() {
+            const inputVal = document.getElementById("trackInput").value.trim();
+            const resultBox = document.getElementById("trackResult");
+
+            if (!inputVal) {
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.warning("Please enter an Application Reference ID to search.");
+                }
+                return;
+            }
+
+            const match = mockTrackDB[inputVal];
+            if (match) {
+                document.getElementById("trackTargetName").textContent = match.name;
+                
+                const badge = document.getElementById("trackStatusBadge");
+                badge.textContent = match.status;
+                if (match.status === 'APPROVED') {
+                    badge.className = "badge bg-success";
+                } else if (match.status === 'EVALUATING') {
+                    badge.className = "badge bg-warning text-dark";
+                } else {
+                    badge.className = "badge bg-danger";
+                }
+
+                document.getElementById("trackStatusDesc").textContent = match.desc;
+                resultBox.classList.remove("d-none");
+                
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.success("Compliance record packet parsed successfully.");
+                }
+            } else {
+                resultBox.classList.add("d-none");
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.danger("No compliance tracking records match that Reference ID.");
+                }
+            }
+        });
+
+    });
+</script>
+{% endblock %}

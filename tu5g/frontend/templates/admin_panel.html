@@ -1,0 +1,912 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Panel — TU5G{% endblock %}
+
+{% block extra_head %}
+<style>
+    :root {
+        --primary-blue: #0066ff;
+        --accent-gold: #ffb800;
+        --dark-bg: #0a0e27;
+        --surface: #141b3b;
+        --surface-hover: #1e2652;
+        --text-light: #ffffff;
+        --text-muted: #8b94cc;
+        --color-border: rgba(255, 255, 255, 0.08);
+    }
+
+    /* Admin Sub-Sidebar Layout */
+    .admin-wrapper {
+        display: grid;
+        grid-template-columns: 260px 1fr;
+        gap: 1.5rem;
+        min-height: calc(100vh - 180px);
+    }
+
+    @media (max-width: 992px) {
+        .admin-wrapper {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .admin-sidebar-menu {
+        background: rgba(20, 27, 59, 0.6);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        padding: 1.25rem;
+        backdrop-filter: blur(10px);
+        height: fit-content;
+    }
+
+    .admin-menu-link {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.8rem 1rem;
+        color: var(--text-muted);
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        transition: all 0.25s ease;
+        margin-bottom: 0.25rem;
+    }
+
+    .admin-menu-link:hover, .admin-menu-link.active {
+        color: white;
+        background: rgba(0, 102, 255, 0.1);
+    }
+
+    .admin-menu-link.active {
+        border-left: 3px solid var(--primary-blue);
+        border-radius: 0 8px 8px 0;
+        color: var(--primary-blue);
+    }
+
+    /* Card Panels */
+    .admin-panel-card {
+        background: rgba(20, 27, 59, 0.4);
+        border: 1px solid var(--color-border);
+        border-radius: 16px;
+        padding: 1.75rem;
+        backdrop-filter: blur(12px);
+    }
+
+    .stat-glow-card {
+        background: rgba(10, 14, 39, 0.5);
+        border: 1px solid var(--color-border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        transition: all 0.25s ease;
+    }
+
+    .stat-glow-card:hover {
+        border-color: rgba(0, 102, 255, 0.25);
+        transform: translateY(-2px);
+    }
+
+    /* System Health Nodes */
+    .health-bar-container {
+        height: 8px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    /* Role Badge */
+    .badge-role-admin {
+        background: rgba(0, 102, 255, 0.15);
+        border: 1px solid rgba(0, 102, 255, 0.4);
+        color: #55aaff;
+        font-family: 'Orbitron', sans-serif;
+    }
+
+    .badge-role-super {
+        background: rgba(255, 184, 0, 0.15);
+        border: 1px solid rgba(255, 184, 0, 0.4);
+        color: var(--accent-gold);
+        font-family: 'Orbitron', sans-serif;
+        text-shadow: 0 0 5px rgba(255,184,0,0.2);
+    }
+
+    /* Table styling overrides */
+    .table-admin {
+        font-size: 0.85rem;
+        border-collapse: separate;
+        border-spacing: 0 8px;
+    }
+
+    .table-admin tr {
+        background: rgba(10, 14, 39, 0.3);
+        border-radius: 8px;
+    }
+
+    .table-admin td, .table-admin th {
+        padding: 1rem 0.75rem;
+        border: none !important;
+        vertical-align: middle;
+    }
+
+    .table-admin thead tr {
+        background: transparent !important;
+    }
+
+    .table-admin thead th {
+        color: var(--text-muted);
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+    }
+
+    /* View hide rules */
+    .admin-view-section {
+        display: none;
+    }
+    .admin-view-section.active-view {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-3">
+    
+    <!-- Top Header & Role Switch Simulation -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+        <div>
+            <h2 class="fw-bold text-white mb-1">Administrative Terminal</h2>
+            <p class="text-secondary mb-0">TU5G Global Virtual Telecom Network Operations Console</p>
+        </div>
+        
+        <!-- Simulation Role Toggle -->
+        <div class="bg-dark p-2 rounded-3 border border-secondary-subtle d-flex align-items-center gap-2">
+            <span class="fs-8 text-secondary uppercase fw-bold ms-2 me-1">Role Filter:</span>
+            <select class="form-select form-select-sm bg-dark-input border-0 font-monospace" id="roleSelector" style="width: 160px; color: var(--accent-gold);">
+                <option value="admin">ADMIN VIEW</option>
+                <option value="super_admin" selected>SUPER ADMIN VIEW</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- MAIN GRID WRAPPER -->
+    <div class="admin-wrapper">
+        
+        <!-- SIDEBAR NAVIGATION MENU -->
+        <div class="admin-sidebar-menu">
+            <div class="text-center pb-3 mb-3 border-bottom border-secondary-subtle">
+                <span class="text-secondary fs-9 uppercase d-block mb-1">Current Account</span>
+                <h6 class="fw-bold text-white mb-1" id="adminUserLabel">System Superuser</h6>
+                <span class="badge badge-role-super fs-9 px-2.5 py-1" id="adminRoleBadge">SUPER ADMIN</span>
+            </div>
+
+            <nav class="nav flex-column">
+                <a class="admin-menu-link active" href="#" data-target="view-dashboard">
+                    <i class="bi bi-speedometer2"></i> Dashboard Overview
+                </a>
+                <a class="admin-menu-link" href="#" data-target="view-users">
+                    <i class="bi bi-people"></i> Users Management
+                </a>
+                <a class="admin-menu-link" href="#" data-target="view-kyc">
+                    <i class="bi bi-shield-check"></i> KYC Document Reviews <span class="badge bg-danger ms-auto fs-9" id="pendingKycBadge">2</span>
+                </a>
+                <a class="admin-menu-link" href="#" data-target="view-sims">
+                    <i class="bi bi-sim"></i> SIM Fleet Controls
+                </a>
+                <a class="admin-menu-link" href="#" data-target="view-payments">
+                    <i class="bi bi-journal-text"></i> Ledger & Payments
+                </a>
+                <a class="admin-menu-link" href="#" data-target="view-governance">
+                    <i class="bi bi-bank"></i> Community Grants
+                </a>
+                <a class="admin-menu-link" href="#" data-target="view-health">
+                    <i class="bi bi-heart-pulse"></i> Infrastructure Health
+                </a>
+            </nav>
+        </div>
+
+        <!-- RIGHT ADMINISTRATIVE WORKSPACE VIEWPORTS -->
+        <div class="admin-workspace">
+            
+            <!-- 1. DASHBOARD VIEW -->
+            <section class="admin-view-section active-view" id="view-dashboard">
+                <div class="admin-panel-card">
+                    <h4 class="fw-bold text-white mb-4">Operations Dashboard</h4>
+                    
+                    <!-- Stats Grid -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-4 col-lg-2.4 col-6">
+                            <div class="stat-glow-card">
+                                <span class="text-secondary fs-9 uppercase d-block mb-1">Total Users</span>
+                                <h3 class="fw-bold text-white mb-0" id="statUsers">24,902</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2.4 col-6">
+                            <div class="stat-glow-card">
+                                <span class="text-secondary fs-9 uppercase d-block mb-1">Active eSIMs</span>
+                                <h3 class="fw-bold text-info mb-0" id="statSims">12,142</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-4 col-lg-2.4 col-6">
+                            <div class="stat-glow-card">
+                                <span class="text-secondary fs-9 uppercase d-block mb-1">Revenue Ledger</span>
+                                <h3 class="fw-bold text-success mb-0" id="statRevenue">$84,320</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-2.4 col-6">
+                            <div class="stat-glow-card">
+                                <span class="text-secondary fs-9 uppercase d-block mb-1">Pending KYC</span>
+                                <h3 class="fw-bold text-danger mb-0" id="statKyc">2</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-2.4 col-12">
+                            <div class="stat-glow-card">
+                                <span class="text-secondary fs-9 uppercase d-block mb-1">Gov Grants</span>
+                                <h3 class="fw-bold text-warning mb-0" id="statGrants">4</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System overview logs -->
+                    <h5 class="fw-bold text-light mb-3">Live Terminal Network Logs</h5>
+                    <div class="bg-dark p-3 rounded border border-secondary-subtle" style="font-family: monospace; font-size: 0.8rem; height: 250px; overflow-y: auto; color: #8b94cc;">
+                        <div class="mb-1 text-secondary">[2026-07-29 05:40:11] ROUTER: Synchronized eSIM route table for +984-777-7777</div>
+                        <div class="mb-1 text-success">[2026-07-29 05:42:25] COMPLIANCE: Automated AI Audit verified KYC applicant Johnathan Doe</div>
+                        <div class="mb-1 text-info">[2026-07-29 05:44:03] UPS-PAY: Handshake established P2P packet settlement TX-9021</div>
+                        <div class="mb-1 text-warning">[2026-07-29 05:48:50] GOVERNANCE: Received Community grant request from 'AI Dev Collective'</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. USERS MANAGEMENT VIEW -->
+            <section class="admin-view-section" id="view-users">
+                <div class="admin-panel-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold text-white mb-0">Users Directory</h4>
+                        <div class="input-group input-group-sm" style="width: 250px;">
+                            <span class="input-group-text bg-dark border-secondary-subtle text-muted"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control bg-dark border-secondary-subtle text-white" id="searchUser" placeholder="Search directory...">
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-admin">
+                            <thead>
+                                <tr>
+                                    <th>User Info</th>
+                                    <th>Carrier Phone</th>
+                                    <th>Role Node</th>
+                                    <th>Security Status</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="userTableBody">
+                                <!-- Generated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. KYC DOCUMENT REVIEWS VIEW -->
+            <section class="admin-view-section" id="view-kyc">
+                <div class="admin-panel-card">
+                    <h4 class="fw-bold text-white mb-4">KYC Compliance Audit Queue</h4>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-admin">
+                            <thead>
+                                <tr>
+                                    <th>Applicant Name</th>
+                                    <th>Document Details</th>
+                                    <th>Residential Jurisdiction</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="kycQueueTableBody">
+                                <!-- Generated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. SIM FLEET CONTROLS VIEW -->
+            <section class="admin-view-section" id="view-sims">
+                <div class="admin-panel-card">
+                    <h4 class="fw-bold text-white mb-4">Sovereign eSIM Asset Inventory</h4>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-admin">
+                            <thead>
+                                <tr>
+                                    <th>Routing Number</th>
+                                    <th>Active Owner Node</th>
+                                    <th>Data Telemetry Plan</th>
+                                    <th>Link Status</th>
+                                    <th class="text-end">Carrier Controls</th>
+                                </tr>
+                            </thead>
+                            <tbody id="simFleetTableBody">
+                                <!-- Generated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 5. LEDGER & PAYMENTS VIEW -->
+            <section class="admin-view-section" id="view-payments">
+                <div class="admin-panel-card">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="fw-bold text-white mb-0">System Settlement Master Ledger</h4>
+                        <span class="badge badge-role-super py-1.5 px-3 uppercase text-accent-gold" id="saLedgerBadge">SUPER ADMIN ONLY LEDGER</span>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-admin">
+                            <thead>
+                                <tr>
+                                    <th>TX Reference</th>
+                                    <th>Protocol Type</th>
+                                    <th>Settlement Amount</th>
+                                    <th>Audit State</th>
+                                </tr>
+                            </thead>
+                            <tbody id="masterLedgerTableBody">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. COMMUNITY GRANTS VIEW -->
+            <section class="admin-view-section" id="view-governance">
+                <div class="admin-panel-card">
+                    <h4 class="fw-bold text-white mb-4">AI Governance Grants Queue</h4>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-admin">
+                            <thead>
+                                <tr>
+                                    <th>Sovereign Group / Organization</th>
+                                    <th>Charter Category</th>
+                                    <th>Justification Description</th>
+                                    <th class="text-end">Governance Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="governanceGrantsTableBody">
+                                <!-- Dynamic -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 7. INFRASTRUCTURE HEALTH VIEW -->
+            <section class="admin-view-section" id="view-health">
+                <div class="admin-panel-card">
+                    <h4 class="fw-bold text-white mb-4">Physical Node Health Status</h4>
+                    
+                    <div class="row g-4 mb-4">
+                        
+                        <!-- Backend API -->
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-4 bg-dark-gradient rounded border border-secondary-subtle">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold text-white">Backend Router</span>
+                                    <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
+                                </div>
+                                <h5 class="font-monospace text-white fw-bold mb-3">Online (100%)</h5>
+                                <div class="health-bar-container">
+                                    <div class="bg-success h-100" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Database -->
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-4 bg-dark-gradient rounded border border-secondary-subtle">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold text-white">MongoDB Sync</span>
+                                    <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
+                                </div>
+                                <h5 class="font-monospace text-white fw-bold mb-3">9 ms latency</h5>
+                                <div class="health-bar-container">
+                                    <div class="bg-success h-100" style="width: 95%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MinIO -->
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-4 bg-dark-gradient rounded border border-secondary-subtle">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold text-white">MinIO Storage</span>
+                                    <span class="text-warning"><i class="bi bi-exclamation-triangle-fill"></i></span>
+                                </div>
+                                <h5 class="font-monospace text-white fw-bold mb-3">78.2 GB Pool</h5>
+                                <div class="health-bar-container">
+                                    <div class="bg-warning h-100" style="width: 82%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Redis Cache -->
+                        <div class="col-md-6 col-lg-3">
+                            <div class="p-4 bg-dark-gradient rounded border border-secondary-subtle">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span class="fw-bold text-white">Redis Cache</span>
+                                    <span class="text-success"><i class="bi bi-check-circle-fill"></i></span>
+                                </div>
+                                <h5 class="font-monospace text-white fw-bold mb-3">1.2 MB Memory</h5>
+                                <div class="health-bar-container">
+                                    <div class="bg-success h-100" style="width: 12%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Super Admin Controls -->
+                    <div id="saControlsSection" class="p-4 bg-dark rounded border border-danger-subtle mb-4">
+                        <h6 class="fs-8 text-danger uppercase fw-bold mb-3"><i class="bi bi-shield-slash-fill me-1"></i>System Administration Core controls</h6>
+                        <div class="d-flex flex-wrap gap-3">
+                            <button class="btn btn-outline-danger btn-sm" id="btnRestartServices">RESTART ALL MICROSERVICES</button>
+                            <button class="btn btn-outline-warning btn-sm" id="btnPurgeCache">FLUSH REDIS MEMORY POOL</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </div>
+</div>
+
+<!-- COMPLIANCE DOCUMENT VIEWER MODAL -->
+<div class="modal fade" id="kycDocModal" tabindex="-1" aria-labelledby="kycDocModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content modal-content-custom">
+            <div class="modal-header border-bottom border-secondary-subtle p-4">
+                <h5 class="modal-title fw-bold text-white" id="kycDocModalLabel">Compliance Document Audit</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-light uppercase fs-8 mb-2">ID Photo Document Front:</h6>
+                        <div class="p-4 rounded border border-secondary-subtle bg-dark text-center">
+                            <i class="bi bi-file-earmark-person fs-1 text-primary d-block mb-2"></i>
+                            <span class="fs-8 text-secondary">Uploaded Front ID (Verified)</span>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="fw-bold text-light uppercase fs-8 mb-2">Proof of Address Document:</h6>
+                        <div class="p-4 rounded border border-secondary-subtle bg-dark text-center">
+                            <i class="bi bi-house-check fs-1 text-primary d-block mb-2"></i>
+                            <span class="fs-8 text-secondary">Address Proof (Utility Bill)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top border-secondary-subtle p-3 justify-content-between">
+                <span class="fs-8 text-muted" id="auditModalName">—</span>
+                <div>
+                    <button type="button" class="btn btn-danger px-4" id="btnRejectKycModal">Reject</button>
+                    <button type="button" class="btn btn-success px-4" id="btnApproveKycModal">Approve Node</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        let currentRole = "super_admin"; // Simulated state: 'admin' or 'super_admin'
+
+        // Active View navigation
+        document.querySelectorAll(".admin-menu-link").forEach(link => {
+            link.addEventListener("click", function(e) {
+                e.preventDefault();
+                document.querySelectorAll(".admin-menu-link").forEach(l => l.classList.remove("active"));
+                this.classList.add("active");
+
+                const target = this.dataset.target;
+                document.querySelectorAll(".admin-view-section").forEach(s => s.classList.remove("active-view"));
+                document.getElementById(target).classList.add("active-view");
+            });
+        });
+
+        // Mock User DB
+        let users = [
+            { id: "U-1209", name: "Johnathan Doe", email: "john@example.com", phone: "+984-555-1212", role: "Operator", status: "active" },
+            { id: "U-1210", name: "Alice Springs", email: "alice@example.com", phone: "+984-777-1234", role: "Operator", status: "active" },
+            { id: "U-1211", name: "Bob Smith", email: "bob@example.com", phone: "+984-111-9876", role: "Operator", status: "deactivated" },
+            { id: "U-1212", name: "Admin Carter", email: "carter@tu5g.online", phone: "+984-000-1111", role: "Admin", status: "active" }
+        ];
+
+        // Mock KYC Database
+        let kycPending = [
+            { id: "K-501", name: "Dave Miller", type: "Passport", docNum: "P1234567", country: "United States", address: "44 Wall St, New York" },
+            { id: "K-502", name: "Emma Watson", type: "National ID", docNum: "ID-9081231", country: "United Kingdom", address: "10 Downing St, London" }
+        ];
+
+        // Mock SIM Database
+        let simFleet = [
+            { number: "+984-777-7777", owner: "Johnathan Doe", plan: "Premium Tier", status: "Provisioned" },
+            { number: "+984-888-8888", owner: "Alice Springs", plan: "Ultra Tier", status: "Active" },
+            { number: "+984-999-9999", owner: "Dave Miller", plan: "Free Tier", status: "Suspended" }
+        ];
+
+        // Mock Payment ledger
+        let ledger = [
+            { ref: "TX-9021", protocol: "Card (Deposit)", amount: 350.00, status: "completed" },
+            { ref: "TX-9022", protocol: "SIM Store: Premium Number", amount: 100.00, status: "completed" },
+            { ref: "UPS-0112", protocol: "UPS-PAY Transfer P2P", amount: 150.00, status: "completed" },
+            { ref: "TX-9023", protocol: "Crypto (Deposit)", amount: 500.00, status: "completed" }
+        ];
+
+        // Mock Governance applications
+        let grantsQueue = [
+            { id: "G-91", org: "AI Dev Collective", category: "Community Developers", desc: "Building localized P2P cellular mesh network integrations on top of TU5G endpoints." },
+            { id: "G-92", org: "Secular Health NGO", category: "Charities", desc: "Providing support lines to field worker physicians and medical responders in critical areas." }
+        ];
+
+        // Role selector synchronization
+        const roleSelector = document.getElementById("roleSelector");
+        roleSelector.addEventListener("change", function () {
+            currentRole = this.value;
+            syncAdminRoleUI();
+        });
+
+        function syncAdminRoleUI() {
+            if (currentRole === "super_admin") {
+                document.getElementById("adminUserLabel").textContent = "System Superuser";
+                document.getElementById("adminRoleBadge").className = "badge badge-role-super fs-9 px-2.5 py-1";
+                document.getElementById("adminRoleBadge").textContent = "SUPER ADMIN";
+                
+                // Show Super controls
+                document.getElementById("saControlsSection").classList.remove("d-none");
+                document.getElementById("saLedgerBadge").classList.remove("d-none");
+            } else {
+                document.getElementById("adminUserLabel").textContent = "Standard Administrator";
+                document.getElementById("adminRoleBadge").className = "badge badge-role-admin fs-9 px-2.5 py-1";
+                document.getElementById("adminRoleBadge").textContent = "OPERATIONS ADMIN";
+                
+                // Hide Super controls
+                document.getElementById("saControlsSection").classList.add("d-none");
+                document.getElementById("saLedgerBadge").classList.add("d-none");
+            }
+
+            renderUsers();
+            renderKYC();
+            renderSIMs();
+            renderLedger();
+            renderGrants();
+        }
+
+        // Render Users Directory Table
+        function renderUsers() {
+            const table = document.getElementById("userTableBody");
+            table.innerHTML = "";
+
+            users.forEach(u => {
+                const statusBadge = u.status === 'active' ? 'bg-success' : 'bg-danger';
+                const actionText = u.status === 'active' ? 'Deactivate' : 'Reactivate';
+                
+                // Super admin can change role
+                const changeRoleHtml = currentRole === 'super_admin' ? `
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item user-role-toggle" href="#" data-id="${u.id}">${u.role === 'Admin' ? 'Demote to Operator' : 'Promote to Admin'}</a></li>
+                ` : '';
+
+                const row = `
+                    <tr>
+                        <td>
+                            <strong class="text-white d-block">${u.name}</strong>
+                            <span class="text-secondary fs-9">${u.email}</span>
+                        </td>
+                        <td class="font-monospace">${u.phone}</td>
+                        <td><span class="badge ${u.role === 'Admin' ? 'bg-info text-dark' : 'bg-secondary'}">${u.role}</span></td>
+                        <td><span class="badge ${statusBadge}">${u.status}</span></td>
+                        <td class="text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    Manage
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-dark">
+                                    <li><a class="dropdown-item user-status-toggle" href="#" data-id="${u.id}">${actionText}</a></li>
+                                    ${changeRoleHtml}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.insertAdjacentHTML("beforeend", row);
+            });
+
+            bindUserActions();
+        }
+
+        function bindUserActions() {
+            document.querySelectorAll(".user-status-toggle").forEach(btn => {
+                btn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    const id = this.dataset.id;
+                    const u = users.find(x => x.id === id);
+                    if (u) {
+                        u.status = u.status === 'active' ? 'deactivated' : 'active';
+                        renderUsers();
+                        if (window.TU5G_Notifications) {
+                            TU5G_Notifications.success(`User status update processed for: ${u.name}`);
+                        }
+                    }
+                });
+            });
+
+            document.querySelectorAll(".user-role-toggle").forEach(btn => {
+                btn.addEventListener("click", function(e) {
+                    e.preventDefault();
+                    const id = this.dataset.id;
+                    const u = users.find(x => x.id === id);
+                    if (u) {
+                        u.role = u.role === 'Admin' ? 'Operator' : 'Admin';
+                        renderUsers();
+                        if (window.TU5G_Notifications) {
+                            TU5G_Notifications.success(`Role node updated for: ${u.name}`);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Render KYC Audit Queue
+        function renderKYC() {
+            const table = document.getElementById("kycQueueTableBody");
+            table.innerHTML = "";
+
+            document.getElementById("pendingKycBadge").textContent = kycPending.length;
+            document.getElementById("statKyc").textContent = kycPending.length;
+
+            if (kycPending.length === 0) {
+                table.innerHTML = `
+                    <tr><td colspan="4" class="text-center py-4 text-secondary">All compliant documents audited and cleared.</td></tr>
+                `;
+                return;
+            }
+
+            kycPending.forEach(k => {
+                const row = `
+                    <tr id="row-kyc-${k.id}">
+                        <td><strong class="text-white">${k.name}</strong></td>
+                        <td>
+                            <span class="text-info d-block fw-bold">${k.type}</span>
+                            <span class="text-secondary font-monospace fs-9">${k.docNum}</span>
+                        </td>
+                        <td>${k.country}</td>
+                        <td class="text-end">
+                            <button class="btn btn-primary btn-sm px-3 review-kyc-btn" data-id="${k.id}">
+                                Audit Docs
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                table.insertAdjacentHTML("beforeend", row);
+            });
+
+            // Bind review button
+            let selectedKycId = "";
+            document.querySelectorAll(".review-kyc-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    selectedKycId = this.dataset.id;
+                    const k = kycPending.find(x => x.id === selectedKycId);
+                    if (k) {
+                        document.getElementById("auditModalName").textContent = `Applicant: ${k.name} (${k.address})`;
+                        new bootstrap.Modal(document.getElementById("kycDocModal")).show();
+                    }
+                });
+            });
+
+            // Approve in Modal
+            document.getElementById("btnApproveKycModal").onclick = function() {
+                if (!selectedKycId) return;
+                
+                const k = kycPending.find(x => x.id === selectedKycId);
+                if (k) {
+                    // Remove from queue
+                    kycPending = kycPending.filter(x => x.id !== selectedKycId);
+                    
+                    // Add as a verified user
+                    users.push({
+                        id: "U-" + Math.floor(1000 + Math.random() * 9000),
+                        name: k.name,
+                        email: k.name.toLowerCase().replace(' ', '') + "@example.com",
+                        phone: "+984-555-" + Math.floor(1000 + Math.random() * 9000),
+                        role: "Operator",
+                        status: "active"
+                    });
+
+                    renderKYC();
+                    renderUsers();
+                    bootstrap.Modal.getInstance(document.getElementById("kycDocModal")).hide();
+                    
+                    if (window.TU5G_Notifications) {
+                        TU5G_Notifications.success(`Operator profile compliance certified! HMAIL routing active.`);
+                    }
+                }
+            };
+
+            // Reject in Modal
+            document.getElementById("btnRejectKycModal").onclick = function() {
+                if (!selectedKycId) return;
+                
+                kycPending = kycPending.filter(x => x.id !== selectedKycId);
+                renderKYC();
+                bootstrap.Modal.getInstance(document.getElementById("kycDocModal")).hide();
+                
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.danger("Identity application rejected due to non-compliant document formats.");
+                }
+            };
+        }
+
+        // Render SIM Fleet Controls
+        function renderSIMs() {
+            const table = document.getElementById("simFleetTableBody");
+            table.innerHTML = "";
+
+            simFleet.forEach(s => {
+                const statusBadge = s.status === 'Active' ? 'bg-success' : s.status === 'Provisioned' ? 'bg-info text-dark' : 'bg-danger';
+                const actionText = s.status === 'Suspended' ? 'Reactivate Link' : 'Suspend Link';
+                
+                const row = `
+                    <tr>
+                        <td class="font-monospace fw-bold text-white">${s.number}</td>
+                        <td>${s.owner}</td>
+                        <td>${s.plan}</td>
+                        <td><span class="badge ${statusBadge}">${s.status}</span></td>
+                        <td class="text-end">
+                            <button class="btn btn-outline-warning btn-sm sim-status-btn" data-number="${s.number}">
+                                ${actionText}
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                table.insertAdjacentHTML("beforeend", row);
+            });
+
+            document.querySelectorAll(".sim-status-btn").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const num = this.dataset.number;
+                    const sim = simFleet.find(x => x.number === num);
+                    if (sim) {
+                        sim.status = sim.status === 'Suspended' ? 'Active' : 'Suspended';
+                        renderSIMs();
+                        if (window.TU5G_Notifications) {
+                            TU5G_Notifications.success(`E-SIM Carrier transmission link updated for: ${num}`);
+                        }
+                    }
+                });
+            });
+        }
+
+        // Render Ledger
+        function renderLedger() {
+            const table = document.getElementById("masterLedgerTableBody");
+            table.innerHTML = "";
+
+            ledger.forEach(l => {
+                const row = `
+                    <tr>
+                        <td class="font-monospace text-white">${l.ref}</td>
+                        <td>${l.protocol}</td>
+                        <td class="fw-bold text-success">$${l.amount.toFixed(2)}</td>
+                        <td><span class="badge bg-success-subtle border border-success text-success fs-9">AUDITED</span></td>
+                    </tr>
+                `;
+                table.insertAdjacentHTML("beforeend", row);
+            });
+        }
+
+        // Render Community grants
+        function renderGrants() {
+            const table = document.getElementById("governanceGrantsTableBody");
+            table.innerHTML = "";
+
+            document.getElementById("statGrants").textContent = grantsQueue.length;
+
+            if (grantsQueue.length === 0) {
+                table.innerHTML = `
+                    <tr><td colspan="4" class="text-center py-4 text-secondary">All community grant requests resolved.</td></tr>
+                `;
+                return;
+            }
+
+            grantsQueue.forEach(g => {
+                const row = `
+                    <tr>
+                        <td><strong class="text-white">${g.org}</strong></td>
+                        <td><span class="badge bg-warning text-dark">${g.category}</span></td>
+                        <td style="max-width: 300px;" class="text-secondary text-truncate">${g.desc}</td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <button class="btn btn-outline-danger btn-sm decline-grant" data-id="${g.id}">Decline</button>
+                                <button class="btn btn-success btn-sm accept-grant" data-id="${g.id}">Approve Grant</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                table.insertAdjacentHTML("beforeend", row);
+            });
+
+            document.querySelectorAll(".accept-grant").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const id = this.dataset.id;
+                    const g = grantsQueue.find(x => x.id === id);
+                    
+                    grantsQueue = grantsQueue.filter(x => x.id !== id);
+                    renderGrants();
+
+                    if (window.TU5G_Notifications) {
+                        TU5G_Notifications.success(`Sovereign access grant approved for: ${g.org}`);
+                    }
+                });
+            });
+
+            document.querySelectorAll(".decline-grant").forEach(btn => {
+                btn.addEventListener("click", function() {
+                    const id = this.dataset.id;
+                    grantsQueue = grantsQueue.filter(x => x.id !== id);
+                    renderGrants();
+
+                    if (window.TU5G_Notifications) {
+                        TU5G_Notifications.danger("Grant request declined. Applicant has been notified.");
+                    }
+                });
+            });
+        }
+
+        // Initialize UI
+        syncAdminRoleUI();
+
+        // System actions clicks (Super Admin Only)
+        document.getElementById("btnRestartServices").addEventListener("click", function() {
+            if (window.TU5G_Notifications) {
+                TU5G_Notifications.info("Restart packet broadcasted to all micro-servers...");
+            }
+            const btn = this;
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.disabled = false;
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.success("Ecosystem microservices rebooted cleanly.");
+                }
+            }, 2000);
+        });
+
+        document.getElementById("btnPurgeCache").addEventListener("click", function() {
+            if (window.TU5G_Notifications) {
+                TU5G_Notifications.info("Flushing global Redis memory database cache...");
+            }
+            const btn = this;
+            btn.disabled = true;
+            setTimeout(() => {
+                btn.disabled = false;
+                if (window.TU5G_Notifications) {
+                    TU5G_Notifications.success("Redis memory pool cleared and flushed successfully.");
+                }
+            }, 1200);
+        });
+
+    });
+</script>
+{% endblock %}
